@@ -1,4 +1,4 @@
-## Syntax
+# Syntax
 
 A **did:btc1** DID consists of a `did:btc1` prefix, followed by an `id-bech32`
 value, which is a [Bech32m](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
@@ -55,12 +55,12 @@ bech32char = "0" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9" / "a" / "c" /
 
 ABNF is defined by [IETF RFC5234](https://datatracker.ietf.org/doc/html/rfc5234).
 
-### Version Interpretation
+## Version Interpretation
 
 The purpose of the `version` is to identify incompatible changes made in the
-specification (e.g., a change to the way ::Beacon signals:: are constructed and
-interpreted). The updated specification may also change the way that the
-**did:btc1** identifier is encoded.
+specification (e.g., a change to the way [Beacon signals](/spec/terms.md#beacon-signal)
+are constructed and interpreted). The updated specification may also change the
+way that the **did:btc1** identifier is encoded.
 
 There are two consequences. The first is that the `version` MUST be able to go
 beyond the domain of a nibble (1-16). To support this, the start of the decoded
@@ -95,7 +95,7 @@ follows (spaces between bytes added for readability):
 | *F2 D0* 03 c7 ... |      18 | custom test network 2 |
 | *FF 72* 03 c7 ... |      38 | regtest               |
 
-### **did:btc1** Identifier Encoding
+## Identifier Encoding
 
 Given:
 
@@ -150,7 +150,7 @@ Encode the **did:btc1** identifier as follows:
 1. Append `encodedString` to `identifier`.
 1. Return `identifier`.
 
-### **did:btc1** Identifier Decoding
+## Identifier Decoding
 
 Given:
 
@@ -198,7 +198,7 @@ Decode the **did:btc1** identifier as follows:
    public key, raise `invalidDid` error.
 1. Return `idType`, `version`, `network`, and `genesisBytes`.
 
-### Differentiating **did:btc1** Identifiers
+## Differentiating Identifiers
 
 This section is non-normative.
 

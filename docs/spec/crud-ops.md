@@ -1,9 +1,9 @@
-## CRUD Operations
+# CRUD Operations
 
 This section defines the Create, Read, Update, and Deactivate (CRUD) operations
 for the **did:btc1** method.
 
-### Create
+## Create
 
 A **did:btc1** identifier and associated DID document can either be created
 deterministically from a cryptographic seed, or it can be created from an arbitrary
@@ -11,9 +11,9 @@ genesis intermediate DID document representation. In both cases, DID creation ca
 be undertaken in an offline manner, i.e., the DID controller does not need to
 interact with the Bitcoin network to create their DID.
 
-#### Deterministic Key-based Creation
+### Deterministic Key Pair Creation
 
-For deterministic creation, the **did:btc1** identifier encodes a secp256k1 public key.
+For deterministic key pair creation, the **did:btc1** identifier encodes a secp256k1 public key.
 The key is then used to deterministically generate the initial DID document.
 
 The algorithm takes in `pubKeyBytes`, a compressed SEC encoded secp256k1
@@ -24,66 +24,77 @@ public key and optional `version` and `network` values. The algorithm returns a
 1. Set `version` to `1`.
 1. Set `network` to the desired network.
 1. Set `genesisBytes` to `pubKeyBytes`.
-1. Pass `idType`, `version`, `network`, and `genesisBytes` to the [did:btc1
-   Identifier Encoding](#didbtc1-identifier-encoding) algorithm, retrieving
-   `id`.
+1. Pass `idType`, `version`, `network`, and `genesisBytes` to the
+   [Identifier Encoding](/spec/syntax.md#identifier-encoding) algorithm,
+   retrieving `id`.
 1. Set `did` to `id`.
-1. Set `initialDocument` to the result of passing `did` into the [Read] algorithm.
+1. Set `initialDocument` to the result of passing `did` into the [Read](#read)
+   algorithm.
 1. Return `did` and `initialDocument`.
 
-#### External Initial Document Creation
+### External Intermediate DID Document Creation
 
-It is possible to create a **did:btc1** from some initiating arbitrary DID document.
-This allows for more complex initial DID documents, including the ability to include
-Service Endpoints and ::Beacons:: that support aggregation.
+For exteral, intermediate DID Document creation, the **did:btc1** identifer is
+created by encoding some user-provided intermediate DID document. This allows
+for more complex DID document creation, including the ability to include
+[Service Endpoints](http://w3.org/TR/did-1.0/#dfn-service-endpoints) and
+[Beacons](/spec/terms.md#beacon) that support aggregation.
 
-The algorithm takes in an `intermediateDocument` struct, an OPTIONAL `version`,
-and an OPTIONAL `network`. The `intermediateDocument` MUST be a valid DID document
-except all places where the DID document requires the use of the identifier
-(e.g., the id field), this identifier MUST be the placeholder value
-`did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`.
-The DID document SHOULD include at least one verificationMethod and service of
-the type SingletonBeacon.
+The algorithm takes the following inputs:
+* `intermediateDocument`: any arbitrary, valid DID Document with all `identifier`
+   fields (e.g., the id field) replaced with the placeholder value
+   `did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. It
+   should include at least one verificationMethod and service of the type
+   [SingletonBeacon](/spec/terminology#singleton-beacon).
+* `version`: the identifier version, optional, defaults to 1.
+* `network`: the bitcoin network where the DID and DID Document can be resolved,
+   optional, defaults to `bitcoin`.
 
+The algorithm returns the newly created `did` and `initialDocument`.
 1. Set `idType` to "external".
 1. Set `version` to `1`.
 1. Set `network` to the desired network.
 1. Set `genesisBytes` to the result of passing `intermediateDocument` into the
-   [JSON Canonicalization and Hash] algorithm.
-1. Pass `idType`, `version`, `network`, and `genesisBytes` to the [did:btc1
-   Identifier Encoding](#didbtc1-identifier-encoding) algorithm, retrieving
-   `id`.
+   [JSON Canonicalization and Hash](/spec/appendix.md#json-canonicalization-and-hash) algorithm.
+1. Pass `idType`, `version`, `network`, and `genesisBytes` to the
+   [Identifier Encoding](/spec/syntax.md#identifier-encoding) algorithm,
+   retrieving `id`.
 1. Set `did` to `id`.
 1. Set `initialDocument` to a copy of the `intermediateDocument`.
 1. Replace all `did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
    values in the `initialDocument` with the `did`.
-1. Optionally store `canonicalBytes` on a ::Content Addressable Storage:: (CAS)
-   system like IPFS. If doing so, implementations MUST use ::CIDs:: generated following
+1. Optionally store `canonicalBytes` on a
+   [Content Addressable Storage](/spec/terms.md#content-addressable-storage)
+   (CAS) system like [IPFS](https://ipfs.tech/). If doing so, implementations
+   MUST use [CIDs](/spec/terms.md#content-identifiers) generated following
    the IPFS v1 algorithm.
 1. Return `did` and `initialDocument`.
 
-### Read
+## Read
 
-The read operation is executed by a resolver after a resolution request identifying
-a specific **did:btc1** `identifier` is received from a client at ::Resolution Time::.
-The request MAY contain a `resolutionOptions` object containing additional information
-to be used in resolution. The resolver then attempts to resolve the DID document
-of the `identifier` at a specific ::Target Time::. The ::Target Time:: is either provided
-in `resolutionOptions` or is set to the ::Resolution Time:: of the request.
+The read operation is executed by a resolver after a resolution request
+identifying a specific **did:btc1** `identifier` is received from a client at
+[Resolution Time](/spec/terms.md#resolution-time). The request MAY contain
+a `resolutionOptions` object containing additional information to be used in
+resolution. The resolver then attempts to resolve the DID document of the
+`identifier` at a specific [Target Time](/spec/terms.md#target-time). The
+[Target Time](/spec/terms.md#target-time) is either provided in `resolutionOptions`
+or is set to the [Resolution Time](/spec/terms.md#resolution-time) of the
+request.
 
 To do so it executes the following algorithm:
 
-1. Pass `identifier` to the [did:btc1 Identifier Decoding](#didbtc1-identifier-decoding)
+1. Pass `identifier` to the [Identifier Decoding](/spec/syntax.md#identifier-decoding)
    algorithm, retrieving `idType`, `version`, `network`, and `genesisBytes`.
 1. Set `identifierComponents` to a map of `idType`, `version`, `network`, and `genesisBytes`.
 1. Set `initialDocument` to the result of running the algorithm in
-   [Resolve Initial Document] passing in the `identifier`, `identifierComponents`
+   [Resolve Initial Document](#resolve-initial-document) passing in the `identifier`, `identifierComponents`
    and `resolutionOptions`.
 1. Set `targetDocument` to the result of running the algorithm in
-   [Resolve Target Document] passing in `initialDocument` and `resolutionOptions`.
+   [Resolve Target Document](#resolve-target-document) passing in `initialDocument` and `resolutionOptions`.
 1. Return `targetDocument`.
 
-#### Resolve Initial Document
+### Resolve Initial Document
 
 This algorithm specifies how to resolve an initial DID document and validate
 it against the `identifier` for a specific **did:btc1**. The algorithm takes as
@@ -92,21 +103,30 @@ inputs a **did:btc1** `identifier`, `identifierComponents` object and a
 for that identifier.
 
 1. If `identifierComponents.idType` value is "key", then set the `initialDocument`
-   to the result of running the algorithm in
-   [Deterministically Generate Initial DID Document] passing in the `identifier`
-   and `identifierComponents` values.
+   to the result of running the algorithm 
+   [Deterministically Resolve Initial DID Document](#deterministically-generate-initial-did-document)
+   passing in the `identifier` and `identifierComponents` values.
 1. Else If `identifierComponents.idType` value is "external", then set the
-   `initialDocument` to the result of running [External Resolution] passing in
-   the `identifier`, `identifierComponents` and `resolutionOptions` values.
+   `initialDocument` to the result of running [External Resolution](#external-resolution)
+   passing in the `identifier`, `identifierComponents` and `resolutionOptions` values.
 1. Else MUST raise `invalidHRPValue` error.
 1. Return `initialDocument`.
 
-##### Deterministically Generate Initial DID Document
+#### Deterministically Resolve Initial DID Document
 
-This algorithm deterministically generates an initial DID Document from a secp256k1
-public key.
-It takes in a **did:btc1** `identifier` and an `identifierComponents` object and
-returns an `initialDocument`.
+This algorithm deterministically "resolves" an initial DID Document from a secp256k1
+public key. The term "resolve" is used for alignment and congruence since, in
+practice, the DID Document for a deterministic key pair DID is actually generated.
+
+The algorithm takes the following inputs:
+* `identifier`: a valid **did:btc1** identifier
+* `identifierComponents`: an object of the structure:
+   * `idType`: the type of identifier (either "KEY" or "EXTERNAL")
+   * `version`: the identifier version (default=1)
+   * `network`: the bitcoin network where the identifier can be resolved
+   * `genesisBytes`:
+
+The algorithm returns an `initialDocument`.
 
 1. Set `keyBytes` to `identifierComponents.genesisBytes`.
 1. Initialize an `initialDocument` variable as an empty object.
@@ -137,13 +157,16 @@ returns an `initialDocument`.
 
 ###### Deterministically Generate Beacon Services
 
-This algorithm deterministically generates three ::Beacons:: from the single
+This algorithm deterministically generates three [Beacons](/spec/terms.md#beacon) from the single
 `keyBytes` value used to generate the deterministic **did:btc1**, one for each
 of the following three Bitcoin address types for the Bitcoin `network` specified
 by the DID: Pay-to-Public-Key-Hash (P2PKH), Pay-to-Witness-Public-Key-Hash (P2WPKH),
 and Pay-to-Taproot (P2TR). Spends from these three addresses can be produced only
-through signatures from the `keyBytes`'s associated private key.
-Each ::Beacon:: is of the type SingletonBeacon. The algorithm returns a `services` array.
+through signatures from the `keyBytes`'s associated private key. Each
+[Beacon](/spec/terms.md#beacon) is of the type
+[SingletonBeacon](/spec/terms.md#singleton-beacon).
+
+The algorithm returns a `services` array.
 
 1. Initialize a `services` variable to an empty array.
 1. Set `serviceId` to `{identifier}#initialP2PKH`.
@@ -260,7 +283,7 @@ The algorithm returns `targetDocument`, a DID Core conformant DID document or th
 
 This algorithm traverses this history of the Bitcoin blockchain, starting from the block 
 with the blockheight equal to `contemporaryBlockheight`, to find `beaconSignals` 
-emitted by ::Beacons:: specified within the `contemporaryDIDDocument`. 
+emitted by [Beacons](/spec/terms.md#beacon) specified within the `contemporaryDIDDocument`. 
 Each `beaconSignal` is processed to retrieve a ::DID Update Payload:: defining updates to 
 the DID document. Each update is applied to the document and duplicates are ignored. The algorithm 
 recursively executes until either a `targetVersionId` for the DID document is reached, or the 
@@ -360,7 +383,7 @@ This algorithm takes in the following inputs:
 
 - `contemporaryBlockheight`: The height of the block this function is looking for 
    ::Beacon Signals:: in. An integer greater or equal to 0.
-- `beacons`: An array of ::Beacon:: services in the ::contemporary DID document::.
+- `beacons`: An array of [Beacon](/spec/terms.md#beacon) services in the ::contemporary DID document::.
    Each Beacon is a structure with the following properties:
     - `id`: The id of the Beacon service in the DID document. A string.
     - `type`: The type of the Beacon service in the DID document. A string whose values MUST be either SingletonBeacon, CIDAggregateBeacon, or SMTAggregateBeacon.
@@ -372,8 +395,8 @@ This algorithm MUST query the Bitcoin blockchain identified by the `network`.
 
 This algorithm returns a `nextSignals` array of `signal` structs with the following properties:
 
-- `beaconId`: The id for the ::Beacon:: that the ::Beacon Signal:: was announced by.
-- `beaconType`: The type of the ::Beacon:: that announced the ::Beacon Signal::.
+- `beaconId`: The id for the [Beacon](/spec/terms.md#beacon) that the ::Beacon Signal:: was announced by.
+- `beaconType`: The type of the [Beacon](/spec/terms.md#beacon) that announced the ::Beacon Signal::.
 - `tx`: The Bitcoin transaction that is the ::Beacon Signal::.
 - `blockheight`: The blockheight for the block that the Bitcoin transaction was included within.
 - `blocktime`: The timestamp that the Bitcoin block was included into the blockchain.
@@ -397,14 +420,14 @@ This algorithm returns a `nextSignals` array of `signal` structs with the follow
 ##### Process Beacon Signals
 
 This algorithm processes each ::Beacon Signal:: by attempting to retrieve and validate an announce 
-::DID Update Payload:: for that signal according to the type of the ::Beacon::.
+::DID Update Payload:: for that signal according to the type of the [Beacon](/spec/terms.md#beacon).
 
 This algorithm takes as inputs:
 
 - `beaconSignals`: An array of struct representing ::Beacon Signals:: retrieved through executing
 the [Find Next Signals] algorithm. Each struct contains the follow properties:
-   - `beaconId`: The id for the ::Beacon:: that the `signal` was announced by.
-   - `beaconType`: The type of the ::Beacon:: that announced the `signal`.
+   - `beaconId`: The id for the [Beacon](/spec/terms.md#beacon) that the `signal` was announced by.
+   - `beaconType`: The type of the [Beacon](/spec/terms.md#beacon) that announced the `signal`.
    - `tx`: The Bitcoin transaction that is the ::Beacon Signal::.
 - `signalsMetadata`: A Map from Bitcoin transaction identifiers of ::Beacon Signals:: 
    to a struct containing ::Sidecar Data:: for that signal provided as part of the
@@ -608,7 +631,7 @@ The algorithm returns the invoked ::DID Update Payload::.
 This algorithm takes in a `btc1Identifier`, `sourceDocument`, an array of `beaconIds`, 
 and a `didUpdateInvocation`. It retrieves `beaconServices` from the `sourceDocument`
 and calls the Broadcast DID Update algorithm corresponding to the type of
-the ::Beacon::. The algorithm returns an array of `signalsMetadata`, containing the
+the [Beacon](/spec/terms.md#beacon). The algorithm returns an array of `signalsMetadata`, containing the
 necessary data to validate the ::Beacon Signal:: against the `didUpdateInvocation`.
 
 1. Set `beaconServices` to an empty array.
@@ -645,6 +668,6 @@ necessary data to validate the ::Beacon Signal:: against the `didUpdateInvocatio
 To deactivate a **did:btc1**, the DID controller MUST add the property `deactivated`
 with the value `true` on the DID document. To do this, the DID controller constructs
 a valid ::DID Update Payload:: with a JSON patch that adds this property and announces
-the payload through a ::Beacon:: in their current DID document following the algorithm
+the payload through a [Beacon](/spec/terms.md#beacon) in their current DID document following the algorithm
 in [Update]. Once a **did:btc1** has been deactivated this
 state is considered permanent and resolution MUST terminate.

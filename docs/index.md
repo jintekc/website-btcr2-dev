@@ -13,7 +13,7 @@ hero:
       link: /spec
     - theme: alt
       text: Implementations
-      link: /installation
+      link: /impls
 features:
   - icon: 🛡️
     title: Censorship Resistant

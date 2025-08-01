@@ -27,14 +27,14 @@ export default defineConfig({
         text  : 'Specification',
         link  : '/spec',
         items : [
-          { text: 'Overview', link: '/spec/overview' },
+          { text: 'Abstract', link: '/spec/abstract' },
+          { text: 'Terminology', link: '/spec/terms' },
           { text: 'Introduction & Motivation', link: '/spec/intro' },
-          { text: 'Terminology', link: '/spec/terminology' },
           { text: 'Syntax', link: '/spec/syntax' },
-          { text: 'CRUD Operations', link: '/spec/crud-operations' },
+          { text: 'CRUD Operations', link: '/spec/crud-ops' },
           { text: 'Update Beacons', link: '/spec/update-beacons' },
-          { text: 'Privacy Considerations', link: '/spec/privacy-considerations' },
-          { text: 'Security Considerations', link: '/spec/security-considerations' },
+          { text: 'Privacy Considerations', link: '/spec/privacy' },
+          { text: 'Security Considerations', link: '/spec/security' },
           { text: 'References', link: '/spec/references' },
           { text: 'Appendix', link: '/spec/appendix' },
         ]
@@ -43,10 +43,10 @@ export default defineConfig({
         text  : 'Implementations',
         link  : '/impls',
         items : [
-          { text: 'TypeScript', link: '/impls/ts' },
-          { text: 'Rust', link: '/impls/rs' },
-          { text: 'Python', link: '/impls/py' },
           { text: 'Java', link: '/impls/java' },
+          { text: 'Python', link: '/impls/py' },
+          { text: 'Rust', link: '/impls/rs' },
+          { text: 'TypeScript', link: '/impls/ts' },
         ]
       }
     ],

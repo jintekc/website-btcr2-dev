@@ -1,6 +1,6 @@
 ## Privacy Considerations
 
-### did:btc1 Design Considerations
+Below are the various design considerations made with respect to privacy.
 
 #### Updates Need not be Public
 
