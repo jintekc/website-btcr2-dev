@@ -1,5 +1,4 @@
 ---
-# https://vitepress.dev/reference/default-theme-home-page
 layout: home
 hero:
   name: did:btc1
@@ -13,7 +12,7 @@ hero:
       link: /spec
     - theme: alt
       text: Implementations
-      link: /impls
+      link: /impls# https://vitepress.dev/reference/default-theme-home-page
 features:
   - icon: 🛡️
     title: Censorship Resistant

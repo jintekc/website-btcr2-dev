@@ -20,25 +20,9 @@ export default defineConfig({
       { text: 'Implementations', link: '/impls' },
     ],
     footer : {
-      copyright: "Copyright &copy; 2024 Digital Contract Design"
+      copyright: "Copyright &copy; 2025 Digital Contract Design"
     },
     sidebar : [
-      {
-        text  : 'Specification',
-        link  : '/spec',
-        items : [
-          { text: 'Abstract', link: '/spec/abstract' },
-          { text: 'Terminology', link: '/spec/terms' },
-          { text: 'Introduction & Motivation', link: '/spec/intro' },
-          { text: 'Syntax', link: '/spec/syntax' },
-          { text: 'CRUD Operations', link: '/spec/crud-ops' },
-          { text: 'Update Beacons', link: '/spec/update-beacons' },
-          { text: 'Privacy Considerations', link: '/spec/privacy' },
-          { text: 'Security Considerations', link: '/spec/security' },
-          { text: 'References', link: '/spec/references' },
-          { text: 'Appendix', link: '/spec/appendix' },
-        ]
-      },
       {
         text  : 'Implementations',
         link  : '/impls',
