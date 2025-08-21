@@ -1,7 +1,5 @@
 import { defineConfig } from 'vitepress';
 
-// https://vitepress.dev/reference/site-config
-
 export default defineConfig({
   title           : 'did:btc1',
   description     : 'A censorship-resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document.',
@@ -17,6 +15,7 @@ export default defineConfig({
     nav : [
       { text: 'Home', link: '/' },
       { text: 'Specification', link: '/spec' },
+      { text: 'Diagrams', link: '/diagrams' },
       { text: 'Implementations', link: '/impls' },
     ],
     footer : {

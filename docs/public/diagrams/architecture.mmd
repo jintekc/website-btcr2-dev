@@ -1,0 +1,42 @@
+flowchart TB
+  Controller([Controller])
+  Resolver([Resolver])
+
+  subgraph SDK["Application / SDK"]
+    Create[Btc1Create]
+    Read[Btc1Read]
+    Update[Btc1Update]
+    Factory[BeaconFactory]
+    KMS[Key Manager]
+    Crypto[Cryptosuite]
+  end
+
+  subgraph BTC1Beacon
+    SingletonBeacon
+    MapBeacon
+    SMTBeacon
+  end
+
+  BTC[(Bitcoin Blockchain)]
+  CAS["CAS (IPFS)"]
+  Sidecar[Sidecar Data]
+
+  Controller --> Create
+  Controller --> Update
+  Update --> KMS
+  Update --> Crypto
+  Update --> Factory
+  Factory --> SingletonBeacon
+  Factory --> MapBeacon
+  Factory --> SMTBeacon
+  Update --> Sidecar
+
+  SingletonBeacon --> BTC
+  MapBeacon --> BTC
+  SMTBeacon --> BTC
+
+  Resolver --> Read
+  Read --> BTC
+  Read --> CAS
+  Read --> Sidecar
+  Read --> Crypto

@@ -10,9 +10,8 @@ hero:
     - theme: brand
       text: Specification
       link: /spec
-    - theme: alt
       text: Implementations
-      link: /impls# https://vitepress.dev/reference/default-theme-home-page
+      link: /impls
 features:
   - icon: 🛡️
     title: Censorship Resistant
