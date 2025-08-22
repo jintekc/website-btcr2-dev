@@ -1,0 +1,28 @@
+---
+title: 4.2.1 Resolve Initial DID Document
+---
+
+flowchart TD
+
+    Start@{ shape: circle, label: "Resolve Initial<br>DID Document" } --> CheckIdType{ idType }
+
+    %% Deterministic Path
+    CheckIdType -->|KEY| Deterministic@{ shape: subproc, label: "Deterministically Generate Initial DID Document" }
+    Deterministic --> GenerateBeacon@{ shape: subproc, label: "Generate Beacon Services" }
+    GenerateBeacon --> EstablishSingleton@{ shape: subproc, label: "Establish Singleton Beacon" }
+
+    %% External Path
+    CheckIdType -->|EXTERNAL| External@{ shape: subproc, label: "External Resolution" }
+    External -->CheckSidecarData{resolutionOptions.<br>sidecarData.<br>initialDocument}
+    CheckSidecarData-->|NOT NULL| SidecarValidate@{ shape: subproc, label: "Sidecar Initial DID Document Validation" }
+    CheckSidecarData-->|NULL| CasRetrieval@{ shape: subproc, label: "CAS Retrieval" }
+    CasRetrieval-->CheckInitialDocument{ initialDocument }
+    SidecarValidate-->CheckInitialDocument
+    CheckInitialDocument-->|VALID| ReturnInitialDocument@{ shape: lean-l, label: "Return initialDocument" }
+
+    %% Error
+    CheckIdType -->|ERROR| InvalidHRPValue@{ shape: stadium, label: "InvalidHRPValue" }
+    CheckInitialDocument-->|INVALID| InvalidDIDDocumentError@{ shape: stadium, label: "InvalidDIDDocumentError" }
+
+    %% Return
+    EstablishSingleton --> ReturnInitialDocument

@@ -9,12 +9,12 @@ The below architecture diagram shows a high-level view of the actors, participan
 ```mermaid
 flowchart TB
   Controller([DID Controller])
-  Client([Relying Party / Client])
+  Resolver([DID Resolver])
 
   subgraph SDK["Application / SDK"]
-    Create[Btc1Create]
-    Read[Btc1Read]
-    Update[Btc1Update]
+    Create[BTC1Create]
+    Read[BTC1Read]
+    Update[BTC1Update]
     Factory[BeaconFactory]
     KMS[Key Manager]
     Crypto[Cryptosuite]
@@ -44,7 +44,7 @@ flowchart TB
   MapBeacon --> BTC
   SMTBeacon --> BTC
 
-  Client --> Read
+  Resolver --> Read
   Read --> BTC
   Read --> CAS
   Read --> Sidecar
@@ -57,13 +57,13 @@ The below sequence diagrams focus on the CRUD algorithms in the specification.
 
 ### Create From Deterministic Key Pair
 
-The From Deterministic Key Pair algorithm encodes a secp256k1 public key as a did:btc1 identifier. The public key is then used to deterministically generate the initial DID document.
+This algorithm encodes a secp256k1 public key as a did:BTC1 identifier. The public key is then used to deterministically generate the initial DID document.
 
 ```mermaid
 sequenceDiagram
     title 4.1.1 From Deterministic Key Pair
     participant Controller as DID Controller
-    participant BTC1Create
+    participant BTC1Create as "BTC1 Create"
     participant Encode as Identifier Encoding
     participant BTC1Read
 
@@ -80,7 +80,7 @@ sequenceDiagram
 
 ### Create From External Intermediate DID Document
 
-The From Deterministic Key Pair algorithm encodes a secp256k1 public key as a did:btc1 identifier. The public key is then used to deterministically generate the initial DID document.
+The From Deterministic Key Pair algorithm encodes a secp256k1 public key as a did:BTC1 identifier. The public key is then used to deterministically generate the initial DID document.
 
 ```mermaid
 sequenceDiagram
@@ -97,7 +97,7 @@ sequenceDiagram
     Canonicalize-->>BTC1Create: genesisBytes
     BTC1Create->>Encode: Encode(idType, version, network, genesisBytes)
     Encode-->>BTC1Create: id
-    BTC1Create->>BTC1Create: initialDocument = copy(intermediateDocument)<br/>Replace all did:btc1:xxxx... with id
+    BTC1Create->>BTC1Create: initialDocument = copy(intermediateDocument)<br/>Replace all did:BTC1:xxxx... with id
     BTC1Create-->>Controller: did, initialDocument
     Note right of BTC1Create: Optionally, store canonicalBytes on IPFS as CID.
 ```
