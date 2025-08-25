@@ -13,5 +13,5 @@ sequenceDiagram
     BTC1Create->>Encode: Encode(idType, version, network, genesisBytes)
     Encode-->>BTC1Create: id
     BTC1Create->>BTC1Create: initialDocument = copy(intermediateDocument)<br/>Replace all did:btc1:xxxx... with id
-    BTC1Create-->>Controller: did, initialDocument
+    BTC1Create-->>Controller: {did, initialDocument}
     Note right of BTC1Create: Optionally, store canonicalBytes on IPFS as CID.

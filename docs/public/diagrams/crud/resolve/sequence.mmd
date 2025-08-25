@@ -4,7 +4,7 @@ sequenceDiagram
     participant Resolve as BTC1Resolve
     participant Decode as Identifier Decoding
 
-    note over Resolver: DID Controller provides<br/>identifier to DID Resolver
+    note over Resolver: DID Controller<br/>provides identifier to<br/>DID Resolver
 
     Resolver->>Resolve: Resolve(identifier, options)
     Resolve->>Decode: Decode(identifier)

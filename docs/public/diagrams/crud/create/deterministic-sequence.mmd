@@ -12,5 +12,5 @@ sequenceDiagram
     BTC1Create->>Encode: Encode(idType, version, network, genesisBytes)
     Encode-->>BTC1Create: id
     BTC1Create->>BTC1Read: BTC1Read(did = id)
-    BTC1Read-->>BTC1Create: initialDocument
-    BTC1Create-->>Controller: did, initialDocument
+    BTC1Read-->>BTC1Create: {initialDocument}
+    BTC1Create-->>Controller: {did, initialDocument}
