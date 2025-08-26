@@ -16,7 +16,6 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       { text: 'Specification', link: '/spec' },
       { text: 'Diagrams', link: '/diagrams' },
-      { text: 'Implementations', link: '/impls' },
     ],
     footer : {
       copyright: "Copyright &copy; 2025 Digital Contract Design"

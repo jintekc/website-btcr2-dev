@@ -10,8 +10,6 @@ hero:
     - theme: brand
       text: Specification
       link: /spec
-      text: Implementations
-      link: /impls
 features:
   - icon: 🛡️
     title: Censorship Resistant
