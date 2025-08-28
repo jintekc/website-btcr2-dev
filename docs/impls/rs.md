@@ -1,6 +1,36 @@
 # Rust
 
-* Link to docs website
-* Link to github repo
-* Embed code block that performs CRUD operations
-* Allow sers to click "run" and receive outputs
+The Rust implementation ... 
+
+## Source Code
+
+To contribute, install or view the code in-depth, visit the GitHub
+respository
+
+## Contributing
+
+TODO
+
+## Install
+
+TODO
+
+## Usage
+
+* TODO - embed code blocks and/or let users run code block and receive outputs
+
+### Create
+
+* TODO - usage examples for Create
+
+### Resolve
+
+* TODO - usage examples for Resolve
+
+### Update
+
+* TODO - usage examples for Update
+
+### Deactivate
+
+* TODO - usage examples for Deactivate
