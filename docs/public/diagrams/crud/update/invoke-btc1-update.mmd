@@ -1,0 +1,9 @@
+---
+title: 7.3.2 Invoke BTC1 Update
+---
+
+flowchart TD
+    Start@{shape: circle, label: Invoke<br>BTC1 Update} --> DeriveZCap@{shape: subproc, label: Derive Root<br>Capability from<br>did:btc1 Identifier}
+    DeriveZCap --> InstantiateCryptosuite@{shape: subproc, label: Instantiate<br>BIP340 Cryptosuite}
+    InstantiateCryptosuite --> AddProof@{shape: subproc, label: Add Proof to<br>btc1Update}
+    AddProof --> Return@{shape: lean-l, label: Return btc1Update}

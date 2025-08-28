@@ -1,11 +1,11 @@
 ---
-title: 5.2.2 Resolve Target Document
+title: 7.2.2 Resolve Target Document
 ---
 
 flowchart TD
 
     Start@{ shape: circle, label: "Resolve Target<br>Document" } --> TraverseHistory@{ shape: subproc, label: Traverse Bitcoin<br/>Blockchain History }
-    TraverseHistory --> MoreUpdates{More Updates}
+    TraverseHistory --> MoreUpdates{More Updates<br>to Process?}
     MoreUpdates -->|TRUE| JSONCanonicalizeHash1@{shape: subproc, label: JSON Canonicalization<br/>and Hash}
     JSONCanonicalizeHash1 --> FindNextSignals@{shape: subproc, label: Find Next Signals}
     FindNextSignals --> ProcessBeaconSignals@{shape: subproc, label: Process Beacon Signals}
