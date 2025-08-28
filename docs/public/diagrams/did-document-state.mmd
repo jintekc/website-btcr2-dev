@@ -3,13 +3,13 @@ stateDiagram-v2
     state "Intermediate Document" as Intermediate
     state "Target Document" as Target
     state "Contemporary Document" as Contemporary
-    state "Contemporary Document" as Contemporary2
+    state "Contemporary Document" as Contemporary1
 
     [*] --> Initial: Create From<br>Deterministic Key Pair
     [*] --> Intermediate: Create From<br>External DID Document
     Intermediate --> Initial: Replace placeholder DID
     Initial --> Contemporary: Resolve
-    Contemporary --> Contemporary2: Traverse<br>Bitcoin Blockchain
-    Contemporary2 --> Contemporary
-    Contemporary2 --> Target
+    Contemporary --> Contemporary1: Traverse<br>Bitcoin Blockchain
+    Contemporary1 --> Contemporary
+    Contemporary1 --> Target
     Target --> [*]

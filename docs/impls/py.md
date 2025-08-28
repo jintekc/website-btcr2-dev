@@ -1,6 +1,82 @@
 # Python
 
-* Link to docs website
-* Link to github repo
-* Embed code block that performs CRUD operations
-* Allow sers to click "run" and receive outputs
+The Python implementation ... 
+
+## Source Code
+
+To contribute, install or view the code in-depth, visit the GitHub
+respository https://github.com/dcdpr/did-btc1-py.
+
+## Contributing
+
+1. Fork the repository https://github.com/dcdpr/did-btc1-py.git
+2. Follow these steps:
+
+```bash
+# Clone your fork
+git clone https://github.com/{USERNAME}/did-btc1-py.git
+
+# Change directory
+cd did-btc1-py
+
+# Setup development env
+python -m .venv venv
+
+# Activate the virtual env
+source .venv/bin/activate
+
+# Install requirments.txt
+pip install -r requirements.txt
+```
+3. Checkout a new branch, make changes, push to git and submit a PR
+
+## Install
+
+To install from main branch:
+
+```bash
+pip install libbtc1@git+https://github.com/dcdpr/did-btc1-py
+```
+
+To install from source:
+
+```bash
+# Clone the repository
+git clone https://github.com/dcdpr/did-btc1-py.git
+
+# Change directory
+cd did-btc1-py
+
+# Setup development env
+python -m venv venv
+
+# Activate the virtual env
+source venv/bin/activate
+
+# Install requirments.txt
+pip install -r requirements.txt
+```
+
+<span style="color: orange; font-weight: bold;">WARNING</span>
+<br>This implementation is currently in experimental alpha stage.
+<br>There is no pip package available for the time being.
+
+## Usage
+
+* TODO - embed code blocks and/or let users run code block and receive outputs
+
+### Create
+
+* TODO - usage examples for Create
+
+### Resolve
+
+* TODO - usage examples for Resolve
+
+### Update
+
+* TODO - usage examples for Update
+
+### Deactivate
+
+* TODO - usage examples for Deactivate
