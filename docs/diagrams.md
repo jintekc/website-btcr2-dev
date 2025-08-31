@@ -1,21 +1,28 @@
+---
+mermaidTheme: forest
+title: DID BTC1 Diagrams
+---
+
 # Diagrams
 
 Below are UML diagrams of the various objects and algorithms in the specification.
 
 ## Architecture
 
-The below architecture diagram shows a high-level view of the actors, participants and their interactions as laid out in the specification.
+The below architecture diagram is a high-level view of the key parts of the specification and their interactions.
 
 ```mermaid
-flowchart TB
+flowchart LR
+  %% Main Actors
   Controller([DID Controller])
   Resolver([DID Resolver])
 
+  %% Impl Libs & Apps
   subgraph SDK["Application / SDK"]
-    Create[BTC1Create]
-    Read[BTC1Read]
-    Update[BTC1Update]
-    Factory[BeaconFactory]
+    Create[Create]
+    Deactivate[Deactivate]
+    Update[Update]
+    Read[Read]
     KMS[Key Manager]
     Crypto[Cryptosuite]
   end
@@ -26,78 +33,248 @@ flowchart TB
     SMTBeacon
   end
 
+  %% Data
   BTC[(Bitcoin Blockchain)]
-  CAS["CAS (IPFS)"]
-  Sidecar[Sidecar Data]
+  CAS[("CAS (IPFS)")]
+  Sidecar[(Sidecar Data)]
 
+  %% DID Resolver
+  Resolver ---> Read
+
+  %% DID Controller
   Controller --> Create
   Controller --> Update
+  Controller --> Deactivate
+  
+  %% Update
   Update --> KMS
   Update --> Crypto
-  Update --> Factory
-  Factory --> SingletonBeacon
-  Factory --> MapBeacon
-  Factory --> SMTBeacon
   Update --> Sidecar
 
-  SingletonBeacon --> BTC
-  MapBeacon --> BTC
-  SMTBeacon --> BTC
+  %% Beacons
+  Update --> BTC1Beacon
+  BTC1Beacon --> BTC
 
-  Resolver --> Read
+  %% Read
   Read --> BTC
   Read --> CAS
   Read --> Sidecar
   Read --> Crypto
+
+  %% Deactivate (Reuses Update)
+  Deactivate --> Update
 ```
 
-## Sequence
+## Data Flow
 
-The below sequence diagrams focus on the CRUD algorithms in the specification.
+The below data flowcharts map the high-level algorithm calls made for each of the CRUD Operations in the specification.
 
-### Create From Deterministic Key Pair
+### Create
 
-This algorithm encodes a secp256k1 public key as a did:BTC1 identifier. The public key is then used to deterministically generate the initial DID document.
+The [Create](https://dcdpr.github.io/did-btc1/#create) operation consists of two main algorithms for creating
+identifiers and DID documents.
+
+1. [From Deterministic Key Pair](https://dcdpr.github.io/did-btc1/#from-deterministic-key-pair) encodes a secp256k1
+   public key as a didbtc1 identifier. The public key is then used to deterministically generate the
+   [initial DID document](https://dcdpr.github.io/did-btc1/#def-initial-did-document).
+1. [From External Intermediate DID document](https://dcdpr.github.io/did-btc1/#from-external-intermediate-did-document)
+   encodes an external [intermediate DID document](https://dcdpr.github.io/did-btc1/#def-intermediate-did-document)
+   as a did:btc1 identifier. Doing so allows for more complex [initial DID documents](https://dcdpr.github.io/did-btc1/#def-initial-did-document)
+   with features such as the ability to include Service Endpoints and [BTC1 Beacons](https://dcdpr.github.io/did-btc1/#def-btc1-beacon)
+   that support aggregation.
+   
+In both cases, DID creation can be undertaken in an offline manner, i.e., the DID controller does NOT need to interact
+with the Bitcoin network to create their DID.
 
 ```mermaid
-sequenceDiagram
-    title 4.1.1 From Deterministic Key Pair
-    participant Controller as DID Controller
-    participant BTC1Create as "BTC1 Create"
-    participant Encode as Identifier Encoding
-    participant BTC1Read
+flowchart TD
+    %% Start
+    Start@{shape: circle, label: Create DID &<br/>DID Document} --> CheckIdType{idType}
+    
+    %% Deterministic
+    CheckIdType -->|KEY|Deterministic@{shape: subproc, label: From Deterministic<br/>Key Pair}
+    Deterministic --> IdentifierEncodingK1@{shape: subproc, label: Identifier<br/>Encoding (k1)}
+    IdentifierEncodingK1 ---> ResolveDeterministic@{shape: subproc, label: Deterministically Generate<br/>Initial DID Document}
 
-    note over Controller, BTC1Read: Offline — no Bitcoin network interaction
+    %% External
+    CheckIdType -->|EXTERNAL|External@{shape: subproc, label: From External<br/>Intermediate DID Document}
+    External --> JSONCanonicalizeHash@{shape: subproc, label: JSON Canonicalization<br/>and Hash}
+    JSONCanonicalizeHash --> IdentifierEncodingX1@{shape: subproc, label: Identifier<br/>Encoding (x1)}
+    IdentifierEncodingX1 --> CheckStoreOnCAS{Store on CAS?}
+    CheckStoreOnCAS -->|TRUE|StoreOnCAS@{shape: subproc, label: Publish Intermediate DID Document to CAS}
+    CheckStoreOnCAS -->|FALSE|Return
+    StoreOnCAS --> Return
 
-    Controller->>BTC1Create: CreateDeterministic(pubKeyBytes, version?, network?)
-    BTC1Create->>BTC1Create: idType="key"<br/>version=1<br/>network=desired<br/>genesisBytes=pubKeyBytes
-    BTC1Create->>Encode: Encode(idType, version, network, genesisBytes)
-    Encode-->>BTC1Create: id
-    BTC1Create->>BTC1Read: BTC1Read(did = id)
-    BTC1Read-->>BTC1Create: initialDocument
-    BTC1Create-->>Controller: did, initialDocument
+    %% Error
+    CheckIdType -->|ERROR|InvalidIdType@{shape: stadium, label: InvalidIdType}
+  
+    %% Return
+    ResolveDeterministic --> Return@{shape: lean-l, label: Return<br/>did, initialDocument}
 ```
 
-### Create From External Intermediate DID Document
+### Read
 
-The From Deterministic Key Pair algorithm encodes a secp256k1 public key as a did:BTC1 identifier. The public key is then used to deterministically generate the initial DID document.
+The [Read](https://dcdpr.github.io/did-btc1/#read) operation is executed by a DID Resolver after receiving a resolution
+request for a specific did:btc1 identifier. 
+
+It consists of two main subprocesses:
+  1. [Resolve Initial DID Document](https://dcdpr.github.io/did-btc1/#resolve-initial-did-document) resolves an initial
+     DID document validating it against the given did:btc1 identifier.
+  1. [Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) uses an initial DID document
+     to resolve the target document by walking the Bitcoin blockchain to identify Beacon Signals that announce BTC1 Updates
+     applicable to the did:btc1 identifier being resolved.
 
 ```mermaid
-sequenceDiagram
-    title 4.1.2 From External Intermediate DID Document
-    participant Controller
-    participant BTC1Create
-    participant Encode as Identifier Encoding
-    participant Canonicalize as Canonicalize & Hash
+flowchart TD
+    Start@{shape: circle, label: Read} --> IdentifierDecoding@{shape: subproc, label: Identifier Decoding}
+    IdentifierDecoding --> ResolveInitial@{shape: subproc, label: Resolve Initial DID Document}
+    ResolveInitial --> ResolveTarget@{shape: subproc, label: Resolve Target Document}
+    ResolveTarget --> Return@{shape: lean-l, label: Return targetDocument}
+```
 
-    note over Controller, Canonicalize: Offline — no Bitcoin network interaction
-    Controller->>BTC1Create: CreateExternal(intermediateDocument, version?, network?)
-    BTC1Create->>BTC1Create: idType="external"<br/>version=1<br/>network="bitcoin"
-    BTC1Create->>Canonicalize: CanonicalizeAndHash(intermediateDocument)
-    Canonicalize-->>BTC1Create: genesisBytes
-    BTC1Create->>Encode: Encode(idType, version, network, genesisBytes)
-    Encode-->>BTC1Create: id
-    BTC1Create->>BTC1Create: initialDocument = copy(intermediateDocument)<br/>Replace all did:BTC1:xxxx... with id
-    BTC1Create-->>Controller: did, initialDocument
-    Note right of BTC1Create: Optionally, store canonicalBytes on IPFS as CID.
+#### Resolve Initial DID Document
+
+[Resolve Initial DID Document](https://dcdpr.github.io/did-btc1/#resolve-initial-did-document) is the first subprocess of
+the Read operation consisting of two additional subprocesses.
+
+* [Deterministically Generate Initial DID Document](https://dcdpr.github.io/did-btc1/#deterministically-generate-initial-did-document)
+  creates an  initial DID document from a secp256k1 public key.
+* [External Resolution](https://dcdpr.github.io/did-btc1/#external-resolution) retrieves an intermediate DID document
+  either from CAS or Sidecar Data.
+
+```mermaid
+flowchart TD
+
+    Start@{shape: circle, label: Resolve Initial<br>DID Document} --> CheckIdType{idType}
+
+    %% Deterministic Path
+    CheckIdType -->|KEY| Deterministic@{shape: subproc, label: Deterministically Generate<br/>Initial DID Document}
+    Deterministic --> GenerateBeacon@{shape: subproc, label: Generate<br/>Beacon Services}
+    GenerateBeacon --> EstablishSingleton@{shape: subproc, label: Establish<br/>Singleton Beacon}
+
+    %% External Path
+    CheckIdType -->|EXTERNAL| External@{shape: subproc, label: External Resolution}
+    External -->CheckSidecarData{resolutionOptions.<br>sidecarData.initialDocument}
+    CheckSidecarData-->|NOT NULL| SidecarValidate@{shape: subproc, label: Sidecar Initial<br/>DID Document Validation}
+    CheckSidecarData-->|NULL| CasRetrieval@{shape: subproc, label: CAS Retrieval}
+    CasRetrieval-->CheckInitialDocument{initialDocument}
+    SidecarValidate-->CheckInitialDocument
+    CheckInitialDocument-->|VALID| ReturnInitialDocument@{shape: lean-l, label: Return initialDocument}
+
+    %% Error
+    CheckIdType -->|ERROR| InvalidHRPValue@{shape: stadium, label: InvalidHRPValue}
+    CheckInitialDocument-->|INVALID| InvalidDIDDocumentError@{shape: stadium, label: InvalidDIDDocumentError}
+
+    %% Return
+    EstablishSingleton --> ReturnInitialDocument
+```
+
+#### Resolve Target Document
+
+[Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) is the second subprocess of the Read
+operation, which calls a single recursive subprocess, [Traverse Bitcoin Blockchain History](https://dcdpr.github.io/did-btc1/#traverse-bitcoin-blockchain-history),
+which walks the Bitcoin blockchain and identifies Beacon Signals that announce BTC1 Updates applicable to the did:btc1
+identifier being resolved.
+
+```mermaid
+flowchart TD
+    Start@{shape: circle, label: Resolve Target<br>Document} --> TraverseHistory@{shape: subproc, label: Traverse Bitcoin<br/>Blockchain History}
+    TraverseHistory --> WhileUpdates{orderedUpdates.length > 0}
+    WhileUpdates -->|TRUE| JSONCanonicalizeHash1@{shape: subproc, label: JSON Canonicalization<br/>and Hash}
+    JSONCanonicalizeHash1 --> FindNextSignals@{shape: subproc, label: Find Next Signals}
+    FindNextSignals --> ProcessBeaconSignals@{shape: subproc, label: Process Beacon Signals}
+    ProcessBeaconSignals --> TargetVersionId{update<br/>.targetVersionId}
+    TargetVersionId -->| \> currentVersionId + 1| LatePublishing@{shape: stadium, label: LatePublishingError}
+    TargetVersionId -->| = currentVersionId + 1| ApplyDidUpdate@{shape: subproc, label: Apply<br/>DID Update}
+    TargetVersionId -->| <= currentVersionId| ConfirmDupeUpdate@{shape: subproc, label: Confirm Duplicate Update} 
+    ApplyDidUpdate --> JSONCanonicalizeHash2@{shape: subproc, label: JSON Canonicalization<br/>and Hash}
+    JSONCanonicalizeHash2 --> TraverseHistory
+    ConfirmDupeUpdate --> TraverseHistory
+    WhileUpdates -->|FALSE| ReturnTargetDocument@{shape: lean-l, label: Return targetDocument}
+```
+
+### Update
+
+The [Update](https://dcdpr.github.io/did-btc1/#update) operation is executed by a DID Controller to make changes to a
+DID document. Updates to a DID document is achieved by constructing JSON Patches, invoking and securing them and announcing
+them to the Bitcoin blockchain.
+
+It consists of three main subprocesses:
+  1. [Construct BTC1 Update](https://dcdpr.github.io/did-btc1/#resolve-initial-did-document) resolves an initial
+     DID document validating it against the given did:btc1 identifier.
+  1. [Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) uses an initial DID document
+     to resolve the target document by walking the Bitcoin blockchain to identify Beacon Signals that announce BTC1 Updates
+     applicable to the did:btc1 identifier being resolved.
+
+```mermaid
+flowchart TD
+    Start@{shape: circle, label: Update} --> ConstructUpdate@{shape: subproc, label: Construct BTC1 Update}
+    ConstructUpdate --> InvokeUpdate@{shape: subproc, label: Invoke BTC1 Update}
+    InvokeUpdate --> AnnounceUpdate@{shape: subproc, label: Announce DID Update}
+    AnnounceUpdate --> End@{shape: lean-l, label: Return signalsMetadata}
+```
+
+#### Contruct BTC1 Update
+
+[Construct BTC1 Update](https://dcdpr.github.io/did-btc1/#construct-btc1-update) is the first subprocess of the Update
+algorithm. The goal of this subprocess is to apply a JSON Patch document to a source DID document and verify that the resulting
+updated target DID document is a valid, conformant DID document.
+
+```mermaid
+flowchart TD
+    Start@{shape: circle, label: Construct<br>BTC1 Update} --> ConstructPatch@{shape: subproc, label: Apply JSON Patch<br>to sourceDocument}
+    ConstructPatch --> ValidateTargetDoc{Is targetDocument<br>conformant?}
+    ValidateTargetDoc -->|TRUE|JSONCanonicalizeHash@{shape: subproc, label: Canonicalize and Hash sourceDocument and targetDocument}
+    ValidateTargetDoc -->|FALSE|HandleError@{ shape: stadium, label: "InvalidDIDUpdateError" }
+    JSONCanonicalizeHash --> End@{shape: lean-l, label: Return unsecuredBtc1Update}
+```
+
+#### Invoke BTC1 Update
+
+[Invoke BTC1 Update](https://dcdpr.github.io/did-btc1/#invoke-btc1-update) is section 7.3.2 of the DID BTC1 Method specification.
+It is the second subprocess of the Update algorithm with the goal of retrieving and use the private key associated with
+the verification method listed in the source DID document to sign and add a Data Integrity Proof to the BTC1 Update.
+
+```mermaid
+flowchart TD
+    Start@{shape: circle, label: Invoke<br>BTC1 Update} --> DeriveZCap@{shape: subproc, label: Derive Root<br>Capability from<br>did:btc1 Identifier}
+    DeriveZCap --> InstantiateCryptosuite@{shape: subproc, label: Instantiate<br>BIP340 Cryptosuite}
+    InstantiateCryptosuite --> AddProof@{shape: subproc, label: Add Proof to<br>btc1Update}
+    AddProof --> Return@{shape: lean-l, label: Return btc1Update}
+```
+
+#### Announce DID Update
+
+[Announce DID Update](https://dcdpr.github.io/did-btc1/#announce-did-update) is the third subprocess of the Update
+algorithm. The goal of this subprocess is to retrieve the services object(s) from the source DID document and call
+the Broadcast DID Update algorithm corresponding to the type of the BTC1 Beacon: Singleton Beacon, Map Beacon or SMT Beacon.
+
+```mermaid
+flowchart TD
+    Start@{shape: circle, label: Announce<br>BTC1 Update} --> FindBeacons{Find<br>beaconServices}
+    FindBeacons -->|NOT FOUND| BeaconNotFound@{shape: stadium, label: BeaconNotFoundError}
+    FindBeacons -->|FOUND| ForEach[For each<br>beaconService]
+    ForEach -->AddMoreBeacons{beaconService<br>.type}
+    AddMoreBeacons -->|SingletonBeacon| BroadcastSingleton@{shape: subproc, label: Broadcast Singleton<br>Beacon Signal}
+    AddMoreBeacons -->|MapBeacon| BroadcastMap@{shape: subproc, label: Broadcast Map<br>Beacon Signal}
+    AddMoreBeacons -->|SMTBeacon| BroadcastSMT@{shape: subproc, label: Broadcast SMT<br>Beacon Signal}
+    AddMoreBeacons -->|ELSE| InvalidBeacon@{shape: stadium, label: InvalidBeaconError}
+    BroadcastSingleton --> SignalMetadata[signalMetadata]
+    BroadcastMap --> SignalMetadata
+    BroadcastSMT --> SignalMetadata
+    SignalMetadata --> MergeSignalsMetadata[Merge<br>signalMetadata]
+    SignalMetadata --> ForEach
+    MergeSignalsMetadata --> Return@{shape: lean-l, label: Return<br>signalsMetadata}
+```
+
+
+### Deactivate
+
+The [Deactivate](https://dcdpr.github.io/did-btc1/#deactivate) operation does not have a flow chart because it uses the [Update](#update) flow to make changes to
+a DID document, specifically, by adding the following key-value pair via secured update.
+
+```json
+{
+  "deactivated": true
+}
 ```

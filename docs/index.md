@@ -8,8 +8,8 @@ hero:
 
   actions:
     - theme: brand
-      text: Specification
-      link: /spec
+      text: Getting Started
+      link: /impls
 features:
   - icon: 🛡️
     title: Censorship Resistant

@@ -6,3 +6,13 @@
 .heading .text {
   max-width: 800px !important;
 }
+
+.mermaid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vp-doc p {
+  line-height: 25px;
+}
