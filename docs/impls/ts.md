@@ -18,7 +18,7 @@ To report bugs or request features, open an issue: https://github.com/dcdpr/did-
 
 To fix bugs or build features, follow the steps below:
 
-1. Install nodejs >= v22.x
+* Install nodejs >= v22.x
 
 ### Windows
 ```powershell
@@ -37,7 +37,7 @@ nvm install --lts
 nvm use --lts
 ```
 
-* Install the `pnpm` package manager.
+* Install `pnpm`
 ```sh
 npm i -g pnpm
 ```
@@ -68,44 +68,97 @@ To install the method directly in your existing project:
 pnpm install @did-btc1/method
 ```
 
-<span style="color: orange; font-weight: bold;">WARNING</span>
-<br>The API and CLI are not stable and/or published for use.
-<br>Keep an eye out here for updates to these packages.
-
-To install the API to interact with the method more easily:
+To install the API to interact with the method and supporting packages in your existing project:
 
 ```bash
 pnpm install @did-btc1/api
 ```
 
-To install the CLI to interact with the method from your terminal:
+To install the CLI to interact with the method and supporting packages from your terminal:
 
 ```bash
 pnpm install -g @did-btc1/cli
 ```
+
+<span style="color: orange; font-weight: bold;">WARNING</span>
+<br>The API and CLI are not stable and/or published for use.
+<br>Keep an eye out here for updates to these packages.
 
 ## Usage
 
 The main use cases are the [CRUD Operations](https://dcdpr.github.io/did-btc1/#crud-operations).
 See the below examples for each available CRUD operation. Currently, the only way to use
 `@did-btc1/method` is by directly installing the method package. Coming soon, you
-can use the API or CLI.
+can use the API or CLI. The below CRUD flow shows how to Create, Resolve, Update and Deactivate a DID BTC1 identifier
+and DID document.
 
 ### Create
 
-The below CRUD flow shows how to Create, Resolve and Update a DID BTC1 identifier
-deterministically from secp256k1 public key bytes.
+To create a new did:btc1 identifier, you can either use a compressed secp256k1 public key or an intmediate DID document. 
+
+#### Deterministic Key Pair Identifier
 
 ```ts
-// ESM
 import { DidBtc1 } from '@did-btc1/method';
-import { getRandomValues } from 'crypto';
 import { SchnorrKeyPair } from '@did-btc1/keypair';
 
-const idType = 'key';
-const pubKeyBytes = getRandomValues(new Uint8Array(32)); // Provide your own pubKeyBytes
+const keys = SchnorrKeyPair.generate() // Or provide your own pubKeyBytes
 
-const { did, initialDocument } = await DidBtc1.create({ idType, pubKeyBytes })
+const { did, initialDocument } = await DidBtc1.create({
+    idType: 'KEY',
+    pubKeyBytes: keys.publicKey.compressed
+})
+console.log('DID and Initial DID document Created Successfully!', { did, initialDocument });
+```
+
+#### External Intermediate DID document Identifier
+
+```ts
+import { DidBtc1 } from '@did-btc1/method';
+import { SchnorrKeyPair } from '@did-btc1/keypair';
+
+const intermediateDocument = {
+    "id": "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "controller": [
+        "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ],
+    "@context": [
+        "https://www.w3.org/TR/did-1.1",
+        "https://btc1.dev/context"
+    ],
+    "verificationMethod": [
+        {
+            "id": "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#key-0",
+            "type": "Multikey",
+            "controller": "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "publicKeyMultibase": "zQ3shRAtucgse3YhPjptmFaUKAtTyoqaSAkpj3J1UT2jtMcvg"
+        }
+    ],
+    "authentication": [
+        "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#key-0"
+    ],
+    "assertionMethod": [
+        "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#key-0"
+    ],
+    "capabilityInvocation": [
+        "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#key-0"
+    ],
+    "capabilityDelegation": [
+        "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#key-0"
+    ],
+    "service": [
+        {
+            "id": "did:btc1:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#service-0",
+            "type": "SingletonBeacon",
+            "serviceEndpoint": "bitcoin:mh9sw9VFe82gNUBbuLXAkBhS42Z1c6JH8E"
+        }
+    ]
+}
+
+const { did, initialDocument } = await DidBtc1.create({
+    idType: 'EXTERNAL',
+    intermediateDocument
+})
 console.log('DID and Initial DID document Created Successfully!', { did, initialDocument });
 ```
 

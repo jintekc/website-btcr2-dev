@@ -74,9 +74,8 @@ The below data flowcharts map the high-level algorithm calls made for each of th
 The [Create](https://dcdpr.github.io/did-btc1/#create) operation consists of two main algorithms for creating
 identifiers and DID documents.
 
-1. [From Deterministic Key Pair](https://dcdpr.github.io/did-btc1/#from-deterministic-key-pair) encodes a secp256k1
-   public key as a didbtc1 identifier. The public key is then used to deterministically generate the
-   [initial DID document](https://dcdpr.github.io/did-btc1/#def-initial-did-document).
+1. [From Deterministic Key Pair](https://dcdpr.github.io/did-btc1/#from-deterministic-key-pair) to encode a secp256k1
+   public key as a didbtc1 identifier.
 1. [From External Intermediate DID document](https://dcdpr.github.io/did-btc1/#from-external-intermediate-did-document)
    encodes an external [intermediate DID document](https://dcdpr.github.io/did-btc1/#def-intermediate-did-document)
    as a did:btc1 identifier. Doing so allows for more complex [initial DID documents](https://dcdpr.github.io/did-btc1/#def-initial-did-document)
@@ -118,11 +117,10 @@ The [Read](https://dcdpr.github.io/did-btc1/#read) operation is executed by a DI
 request for a specific did:btc1 identifier. 
 
 It consists of two main subprocesses:
-  1. [Resolve Initial DID Document](https://dcdpr.github.io/did-btc1/#resolve-initial-did-document) resolves an initial
-     DID document validating it against the given did:btc1 identifier.
-  1. [Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) uses an initial DID document
-     to resolve the target document by walking the Bitcoin blockchain to identify Beacon Signals that announce BTC1 Updates
-     applicable to the did:btc1 identifier being resolved.
+  1. [Resolve Initial DID Document](https://dcdpr.github.io/did-btc1/#resolve-initial-did-document) to resolve an initial
+     DID document for the given did:btc1 identifier.
+  1. [Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) to resolve the target document
+     using updates found on the Bitcoin blockchain.
 
 ```mermaid
 flowchart TD
@@ -138,8 +136,8 @@ flowchart TD
 the Read operation consisting of two additional subprocesses.
 
 * [Deterministically Generate Initial DID Document](https://dcdpr.github.io/did-btc1/#deterministically-generate-initial-did-document)
-  creates an  initial DID document from a secp256k1 public key.
-* [External Resolution](https://dcdpr.github.io/did-btc1/#external-resolution) retrieves an intermediate DID document
+  to create an initial DID document from a secp256k1 public key.
+* [External Resolution](https://dcdpr.github.io/did-btc1/#external-resolution) to retrieve an intermediate DID document
   either from CAS or Sidecar Data.
 
 ```mermaid
@@ -173,8 +171,9 @@ flowchart TD
 
 [Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) is the second subprocess of the Read
 operation, which calls a single recursive subprocess, [Traverse Bitcoin Blockchain History](https://dcdpr.github.io/did-btc1/#traverse-bitcoin-blockchain-history),
-which walks the Bitcoin blockchain and identifies Beacon Signals that announce BTC1 Updates applicable to the did:btc1
-identifier being resolved.
+which walks the Bitcoin blockchain and identifies spending transactions from bitcoin addresses listed in the DID document. These
+spends are called Beacon Signals and may contain announcements about changes made to the DID document controlled by the
+did:btc1 identifier being resolved.
 
 ```mermaid
 flowchart TD
@@ -200,11 +199,9 @@ DID document. Updates to a DID document is achieved by constructing JSON Patches
 them to the Bitcoin blockchain.
 
 It consists of three main subprocesses:
-  1. [Construct BTC1 Update](https://dcdpr.github.io/did-btc1/#resolve-initial-did-document) resolves an initial
-     DID document validating it against the given did:btc1 identifier.
-  1. [Resolve Target Document](https://dcdpr.github.io/did-btc1/#resolve-target-document) uses an initial DID document
-     to resolve the target document by walking the Bitcoin blockchain to identify Beacon Signals that announce BTC1 Updates
-     applicable to the did:btc1 identifier being resolved.
+  1. [Construct BTC1 Update](https://dcdpr.github.io/did-btc1/#construct-btc1-update) to construct an unsecured BTC1 update
+  1. [Invoke BTC1 Update](https://dcdpr.github.io/did-btc1/#invoke-btc1-update) to add a signature unsecured BTC1 update
+  1. [Announce DID Update](https://dcdpr.github.io/did-btc1/#announce-did-update) to broadcast the BTC1 update to the Bitcoin blockchain
 
 ```mermaid
 flowchart TD
@@ -270,11 +267,43 @@ flowchart TD
 
 ### Deactivate
 
-The [Deactivate](https://dcdpr.github.io/did-btc1/#deactivate) operation does not have a flow chart because it uses the [Update](#update) flow to make changes to
-a DID document, specifically, by adding the following key-value pair via secured update.
+The [Deactivate](https://dcdpr.github.io/did-btc1/#deactivate) operation data flowchart is almost identical to the
+[Update](#update) flow since the process of deactivation is simply that of creating an update to the DID document.
+DID Controllers create a JSON Patch to add the key-value pair `{"deactivated": true}` to the DID document. Below is an
+example of a BTC1 Update that would be used to deactivate a DID and DID document.
 
 ```json
 {
-  "deactivated": true
+    "updatePayload": {
+        "@context": [
+            "https://w3id.org/security/v2",
+            "https://w3id.org/zcap/v1",
+            "https://w3id.org/json-ld-patch/v1"
+        ],
+        "patch": [
+            {
+                "op": "add",
+                "path": "/deactivated",
+                "value": true
+            }
+        ],
+        "targetHash": "ER5jJUisvZafd8n6V2Bo...",
+        "targetVersionId": 2,
+        "sourceHash": "3osrqR3kJ2YMEDfwcKow...",
+        "proof": {
+            "cryptosuite": "bip340-jcs-2025",
+            "type": "DataIntegrityProof",
+            "verificationMethod": "did:btc1:k1xyz123#initialKey",
+            "proofPurpose": "capabilityInvocation",
+            "capability": "urn:zcap:root:did%3Abtc1%3Ak1xyz123",
+            "capabilityAction": "Write",
+            "@context": [
+                "https://w3id.org/security/v2",
+                "https://w3id.org/zcap/v1",
+                "https://w3id.org/json-ld-patch/v1"
+            ],
+            "proofValue": "z3LhCeApi5wirR4jubkKQhEEiVRPZADDamf..."
+        }
+    }
 }
 ```
