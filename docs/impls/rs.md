@@ -1,23 +1,22 @@
 # Rust
 
-The Rust implementation ... 
+TODO - content about the rust impl
 
 ## Source Code
 
-To contribute, install or view the code in-depth, visit the GitHub
-respository
+TODO - link to source code
 
 ## Contributing
 
-TODO
+TODO - instructions for FOSS contributions
 
 ## Install
 
-TODO
+TODO - instructions for installation
 
 ## Usage
 
-* TODO - embed code blocks and/or let users run code block and receive outputs
+* TODO - content about usage; if possible, include runnable example code blocks
 
 ### Create
 
