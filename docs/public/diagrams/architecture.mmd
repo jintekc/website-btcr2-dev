@@ -1,12 +1,14 @@
-flowchart TB
-  Controller([Controller])
-  Resolver([Resolver])
+flowchart LR
+  %% Main Actors
+  Controller([DID Controller])
+  Resolver([DID Resolver])
 
+  %% Impl Libs & Apps
   subgraph SDK["Application / SDK"]
-    Create[Btc1Create]
-    Read[Btc1Read]
-    Update[Btc1Update]
-    Factory[BeaconFactory]
+    Create[Create]
+    Deactivate[Deactivate]
+    Update[Update]
+    Read[Read]
     KMS[Key Manager]
     Crypto[Cryptosuite]
   end
@@ -17,26 +19,33 @@ flowchart TB
     SMTBeacon
   end
 
+  %% Data
   BTC[(Bitcoin Blockchain)]
   CAS[("CAS (IPFS)")]
   Sidecar[(Sidecar Data)]
 
+  %% DID Resolver
+  Resolver ---> Read
+
+  %% DID Controller
   Controller --> Create
   Controller --> Update
+  Controller --> Deactivate
+  
+  %% Update
   Update --> KMS
   Update --> Crypto
-  Update --> Factory
-  Factory --> SingletonBeacon
-  Factory --> MapBeacon
-  Factory --> SMTBeacon
   Update --> Sidecar
 
-  SingletonBeacon --> BTC
-  MapBeacon --> BTC
-  SMTBeacon --> BTC
+  %% Beacons
+  Update --> BTC1Beacon
+  BTC1Beacon --> BTC
 
-  Resolver --> Read
+  %% Read
   Read --> BTC
   Read --> CAS
   Read --> Sidecar
   Read --> Crypto
+
+  %% Deactivate (Reuses Update)
+  Deactivate --> Update
