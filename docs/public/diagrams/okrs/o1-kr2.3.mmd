@@ -1,0 +1,46 @@
+---
+title: SMTBeacon - Stuart Updates Keys, Satoshi Verifies
+---
+
+sequenceDiagram
+    autonumber
+    actor Stu as Stuart (Beacon Participant)
+    participant Agg as Beacon Aggregator
+    participant Coh as MuSig2 Cohort (n-of-n)
+    participant BTC as Bitcoin Network ⛓
+    participant CAS as CAS/IPFS 📦
+    actor Sat as Satoshi (Verifier)
+    participant Res as Resolver
+    participant Side as Sidecar 🧳
+
+    Note over Stu: Prepare btc1Update<br/>Compute updateId = SHA256(JCS(btc1Update))
+
+    par Submit updates
+      Stu-->>Agg: { did, updateId | btc1Update }
+      Note right of Stu: If btc1Update sent, Agg will hash to updateId
+      Others-->>Agg: { didᵢ, updateIdᵢ | btc1Updateᵢ }
+    end
+
+    Agg->>Agg: Build beaconAnnouncementMap - {did → updateId}
+    Agg->>Agg: mapHash = SHA256(JCS(map))
+    Agg->>Coh: Unsigned spendTx(OP_RETURN PUSH32(mapHash))
+    Coh->>Coh: Validate map & unsignedSpendTx (§6.5.2.3)
+    Coh->>BTC: Aggregate PSBTs → broadcast spendTx
+
+    Agg->>CAS: Publish map (by mapHash)
+    par Publish updates
+      Agg->>CAS: Publish btc1Update for each entry (if provided)
+      Stu->>CAS: Publish own btc1Update (if not already)
+    end
+
+    Sat->>Res: Resolve did:btc1:...
+    Res->>BTC: Read OP_RETURN mapHash from Map Beacon address
+    alt CAS path
+      Res->>CAS: Get map by mapHash
+      Res->>CAS: Get btc1Update by map[did]
+    else Sidecar path
+      Sat->>Res: Provide map & btc1Update via sidecar
+    end
+
+    Res->>Res: Validate hashes, apply btc1Update, version checks
+    Res-->>Sat: Resolved DID (verified via Map Beacon)

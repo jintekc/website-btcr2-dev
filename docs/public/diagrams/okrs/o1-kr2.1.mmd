@@ -1,0 +1,41 @@
+---
+title: SingletonBeacon - Stuart Updates Keys, Satoshi Verifies
+---
+
+sequenceDiagram
+    autonumber
+    actor Stu as Stuart (DID Controller)
+    participant Wal as BTC1 Wallet (Singleton addr)
+    participant BTC as Bitcoin Network ⛓
+    participant CAS as CAS/IPFS 📦 (optional)
+    actor Sat as Satoshi (Verifier)
+    participant Res as did:btc1 Resolver
+    participant Side as Sidecar 🧳
+
+    Note over Stu: Prepare btc1Update (new key material etc.)<br/>Compute updateId = SHA256(JCS(btc1Update))
+
+    Stu->>Wal: Construct spendTx with OP_RETURN PUSH32(updateId)
+    Wal->>Wal: Sign spendTx (private key for serviceEndpoint)
+    Wal->>BTC: Broadcast spendTx (OP_RETURN last output)
+    alt CAS used
+      Stu->>CAS: Publish btc1Update (under its hash)
+    else Sidecar used
+      Stu->>Side: Share btc1Update directly
+    end
+
+    Note right of Sat: Wants to verify Stuart’s latest DID
+
+    Sat->>Res: Resolve did:btc1:... (targetVersion? optional)
+    Res->>BTC: Scan Beacon address from DID.service (SingletonBeacon)
+    BTC-->>Res: Latest tx with OP_RETURN = updateId
+
+    alt CAS path
+      Res->>CAS: Get btc1Update by updateId
+      CAS-->>Res: btc1Update
+    else Sidecar path
+      Sat->>Res: Provide sidecarDocuments=[btc1Update]
+      Res->>Side: Load sidecarDocuments
+    end
+
+    Res->>Res: Validate btc1Update hash==updateId<br/>Transform doc, check versionId increments, schema-valid
+    Res-->>Sat: Resolved DID with new keys (verified)

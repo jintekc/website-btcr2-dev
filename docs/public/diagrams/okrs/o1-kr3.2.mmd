@@ -1,0 +1,24 @@
+---
+title: "Data Source Distinction - Blockchain vs. Sidecar vs. CAS/IPFS"
+---
+
+flowchart TB
+    subgraph On_Chain[Bitcoin Blockchain ⛓]
+      OP32[OP_RETURN 32 bytes<br/>• Singleton: updateId<br/>• Map: mapHash<br/>• SMT: rootHash]
+    end
+
+    subgraph Off_Chain_Public["CAS / IPFS 📦"]
+      MAP["🗺 Beacon Announcement Map (JSON)"]
+      UPD["🧾 btc1Update (JSON)"]
+    end
+
+    subgraph Off_Chain_Private[Sidecar Data 🧳]
+      PROOF["🌲 smtProof {id, nonce, (updateId), path}"]
+      DOCS["🧾 btc1Update (if not on CAS)"]
+    end
+
+    OP32 -. used by resolver to look up/verify .- MAP
+    OP32 -. used to verify inclusion .- PROOF
+    MAP -->|did → updateId| UPD
+    DOCS -->|hash = updateId| OP32
+    UPD -->|SHA256+JCS=updateId| OP32

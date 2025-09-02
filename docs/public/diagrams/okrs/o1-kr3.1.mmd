@@ -1,0 +1,30 @@
+---
+title: Data Movement Emphasis - Stuart Updates Keys, Satoshi Verifies
+---
+
+sequenceDiagram
+    autonumber
+    actor C as Controller (Stuart)
+    actor V as Verifier (Satoshi)
+    participant B as Beacon (Singleton/Map/SMT)
+    participant N as Bitcoin ⛓
+    participant O as Off-chain Provider
+    participant R as Resolver
+
+    Note over C: Prepare update 🧾 btc1Update → updateId 🔑
+
+    C->>B: Signal intent / submit material (varies by beacon)
+    B->>N: Broadcast OP_RETURN [32 bytes] ⛓
+    par Off-chain availability
+      C->>O: Publish/Share 🧾 btc1Update (CAS 📦 or Sidecar 🧳)
+      B->>O: Publish 🗺 map (Map) 📦
+      C->>O: Share 🌲 smtProof (SMT) 🧳
+    end
+
+    V->>R: Resolve DID
+    R->>N: Read OP_RETURN 32B ⛓
+    R->>O: Fetch needed docs:<br/>🧾 btc1Update / 🗺 map / 🌲 smtProof
+    R->>R: Validate hashes & proofs → apply update
+    R-->>V: Verified resolved DID
+
+    Note over R,V: Legend — Data Types<br/>🧾 btc1Update (document)<br/>🗺 map (MapBeacon document)<br/>🌲 smtProof (inclusion/non-inclusion)<br/>⛓ On-chain 32B commitment

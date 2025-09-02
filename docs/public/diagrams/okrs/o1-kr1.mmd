@@ -1,0 +1,52 @@
+flowchart LR
+    subgraph Controllers
+      Stuart["Stuart (DID Controller)"]
+      Others["Other (DID Controller)"]
+    end
+
+    subgraph Beacon_Services["BTC1 Beacon Services in DID Document (service.type=BTC1Beacon)"]
+      SB["SingletonBeacon<br>serviceEndpoint: p2pkh"]
+      MB["MapBeacon<br>serviceEndpoint: p2wpkh"]
+      SMT["SMTBeacon<br>serviceEndpoint: p2tr"]
+    end
+
+    subgraph Aggregation
+      BA[Beacon Aggregator]
+      Cohort[n-of-n MuSig2 Beacon Cohort<br> Beacon Participants]
+    end
+
+    subgraph Networks
+      BTC[Bitcoin Network]
+      CAS[CAS IPFS 📦]
+      Sidecar[Sidecar Documents 🧳]
+    end
+
+    subgraph Verification
+      Satoshi["Satoshi (Verifier)"]
+      Resolver[did:btc1 Resolver]
+    end
+
+    %% Control/Enrollment
+    Stuart --> SB
+    Stuart --> BA
+    Others --> BA
+    BA --- Cohort
+
+    %% Signal creation/broadcast
+    SB -- OP_RETURN tx with 32 bytes --> BTC
+    BA -- builds & signs Map/SMT signals --> Cohort
+    Cohort -- PSBTs → aggregate → OP_RETURN --> BTC
+
+    %% Side-channel data publication
+    SB -. optional publish btc1Update .-> CAS
+    BA -. publish map & updates .-> CAS
+    Stuart -. share updates/proofs .-> Sidecar
+
+    %% Resolution & verification
+    Satoshi --> Resolver
+    Resolver --> BTC
+    Resolver -. get docs by hash .-> CAS
+    Resolver -. load provided docs .-> Sidecar
+
+    %% Document reconstruction checks
+    Resolver -->|Process Signals per beaconType<br>& apply btc1Updates in order| Satoshi
