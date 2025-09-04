@@ -100,7 +100,7 @@ flowchart TD
     External --> JSONCanonicalizeHash@{shape: subproc, label: JSON Canonicalization<br/>and Hash}
     JSONCanonicalizeHash --> IdentifierEncodingX1@{shape: subproc, label: Identifier<br/>Encoding (x1)}
     IdentifierEncodingX1 --> CheckStoreOnCAS{Store on CAS?}
-    CheckStoreOnCAS -->|TRUE|StoreOnCAS@{shape: subproc, label: Publish Intermediate DID Document to CAS}
+    CheckStoreOnCAS -->|TRUE|StoreOnCAS@{shape: subproc, label: "Publish Intermediate DID Document to CAS"}
     CheckStoreOnCAS -->|FALSE|Return
     StoreOnCAS --> Return
 
@@ -108,7 +108,7 @@ flowchart TD
     CheckIdType -->|ERROR|InvalidIdType@{shape: stadium, label: InvalidIdType}
   
     %% Return
-    ResolveDeterministic --> Return@{shape: lean-l, label: Return<br/>did, initialDocument}
+    ResolveDeterministic --> Return@{shape: lean-l, label: "Return<br/>did, initialDocument"}
 ```
 
 ### Read
@@ -146,14 +146,14 @@ flowchart TD
     Start@{shape: circle, label: Resolve Initial<br>DID Document} --> CheckIdType{idType}
 
     %% Deterministic Path
-    CheckIdType -->|KEY| Deterministic@{shape: subproc, label: Deterministically Generate<br/>Initial DID Document}
+    CheckIdType -->|KEY| Deterministic@{shape: subproc, label: Deterministically<br>Generate<br/>Initial<br>DID Document}
     Deterministic --> GenerateBeacon@{shape: subproc, label: Generate<br/>Beacon Services}
     GenerateBeacon --> EstablishSingleton@{shape: subproc, label: Establish<br/>Singleton Beacon}
 
     %% External Path
     CheckIdType -->|EXTERNAL| External@{shape: subproc, label: External Resolution}
-    External -->CheckSidecarData{resolutionOptions.<br>sidecarData.initialDocument}
-    CheckSidecarData-->|NOT NULL| SidecarValidate@{shape: subproc, label: Sidecar Initial<br/>DID Document Validation}
+    External -->CheckSidecarData{resolutionOptions.<br>sidecarData.<br>initialDocument}
+    CheckSidecarData-->|NOT NULL| SidecarValidate@{shape: subproc, label: Sidecar Initial<br/>DID Document<br>Validation}
     CheckSidecarData-->|NULL| CasRetrieval@{shape: subproc, label: CAS Retrieval}
     CasRetrieval-->CheckInitialDocument{initialDocument}
     SidecarValidate-->CheckInitialDocument
