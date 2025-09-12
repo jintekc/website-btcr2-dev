@@ -5,11 +5,11 @@ The Python implementation ...
 ## Source Code
 
 To contribute, install or view the code in-depth, visit the GitHub
-respository https://github.com/dcdpr/did-btc1-py.
+respository https://github.com/dcdpr/did-btcr2-py.
 
 ## Contributing
 
-Fork and clone https://github.com/{USERNAME}/did-btc1-py.git, install
+Fork and clone https://github.com/{USERNAME}/did-btcr2-py.git, install
 [from source](#from-source), checkout a new branch, make changes, push to git and
 submit a PR.
 
@@ -18,17 +18,17 @@ submit a PR.
 ### From main
 
 ```bash
-pip install libbtc1@git+https://github.com/dcdpr/did-btc1-py
+pip install libbtcr2@git+https://github.com/dcdpr/did-btcr2-py
 ```
 
 ### From source
 
 ```bash
 # Clone the repository
-git clone https://github.com/dcdpr/did-btc1-py.git
+git clone https://github.com/dcdpr/did-btcr2-py.git
 
 # Change directory
-cd did-btc1-py
+cd did-btcr2-py
 
 # Setup development env
 python -m venv venv

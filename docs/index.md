@@ -1,8 +1,8 @@
 ---
 layout: home
 hero:
-  name: did:btc1
-  text: Bitcoin DID Method
+  name: did:btcr2
+  text: Bitcoin Reference 2.0 DID Method 
   tagline: >
     A censorship-resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document.
 
@@ -13,7 +13,7 @@ hero:
 features:
   - icon: 🛡️
     title: Censorship Resistant
-    details: Anchored directly to the Bitcoin blockchain, did:btc1 ensures DIDs cannot be blocked, erased, or overwritten, protecting identity operations from central or state-level interference.
+    details: Anchored directly to the Bitcoin blockchain, did:btcr2 ensures DIDs cannot be blocked, erased, or overwritten, protecting identity operations from central or state-level interference.
   - icon: 🕵️‍♂️
     title: Private
     details: Avoids reliance on public registries by enabling the secure sidecar delivery of DID Documents—transferred directly from controller to relying party—preserving privacy by default.
@@ -28,5 +28,5 @@ features:
     details: DID creation is possible entirely off-chain at zero cost, while updates can be aggregated, making long-term maintenance on Bitcoin practical and economical.
   - icon: 🔐
     title: Closed-Loop Resolution
-    details: DID identifiers remain stable over time, even with frequent updates, making did:btc1 suitable for lasting relationships, recurring interactions, and durable digital identities.
+    details: DID identifiers remain stable over time, even with frequent updates, making did:btcr2 suitable for lasting relationships, recurring interactions, and durable digital identities.
 ---

@@ -1,5 +1,5 @@
 ---
-title: DID BTC1 Protocol Stack
+title: DID BTCR2 Protocol Stack
 ---
 
 graph TB
@@ -16,7 +16,7 @@ graph TB
 
   subgraph L5[DID Resolution & API Layer]
     direction TB
-    Resolver[BTC1 Resolver<br/>Traverse History<br>Apply patches<br>Update DID Document]:::comp
+    Resolver[BTCR2 Resolver<br/>Traverse History<br>Apply patches<br>Update DID Document]:::comp
     JSONLD[JSON-LD<br/>Processing]:::comp
     DIDCore[DID Core<br/>Compliance]:::comp
     APIs[Resolver APIs]:::comp
@@ -34,15 +34,15 @@ graph TB
   subgraph L3[DID Document State Layer]
     direction TB
     Patches[JSON Patch]:::comp
-    Model[BTC1 DID Document]:::comp
+    Model[BTCR2 DID Document]:::comp
     InterDoc[Intermediate<br/>DID documents]:::comp
     Rules[Resolution Rules<br/>& Versioning]:::comp
   end
 
   subgraph L2[Beacon Layer]
     direction TB
-    Ops[BTC1 Update]:::comp
-    Anchors[BTC1 Beacon Signals<br/>commitments to state/patches]:::comp
+    Ops[BTCR2 Update]:::comp
+    Anchors[BTCR2 Beacon Signals<br/>commitments to state/patches]:::comp
     Beacon[SingletonBeacon<br/>MapBeacon<br/>SMTBeacon]:::comp
     Linkage[Tx hash linkage & verification]:::comp
   end

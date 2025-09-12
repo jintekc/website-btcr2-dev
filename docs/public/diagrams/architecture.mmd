@@ -13,7 +13,7 @@ flowchart LR
     Crypto[Cryptosuite]
   end
 
-  subgraph BTC1Beacon
+  subgraph BTCR2Beacon
     SingletonBeacon
     MapBeacon
     SMTBeacon
@@ -38,8 +38,8 @@ flowchart LR
   Update --> Sidecar
 
   %% Beacons
-  Update --> BTC1Beacon
-  BTC1Beacon --> BTC
+  Update --> BTCR2Beacon
+  BTCR2Beacon --> BTC
 
   %% Read
   Read --> BTC

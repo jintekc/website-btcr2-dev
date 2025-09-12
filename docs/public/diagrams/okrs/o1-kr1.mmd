@@ -1,52 +1,52 @@
+%% Look into legend for solid vs. dotted lines
+%% Keep this diagram but rethink how it is organized
+%% Something more circular (maybe??) representing interactions between actors and object
+%% e.g. https://stats.stackexchange.com/questions/3158/what-is-this-type-of-circular-link-visualization-called
+%% - which beacon service type (singleton, Map, SMT)
+    %% - which data delivery (CID, sidecar)
+    %% - is resolver a separate service?  (could be lower or higher trust) 
+
 flowchart LR
     subgraph Controllers
       Stuart["Stuart (DID Controller)"]
       Others["Other (DID Controller)"]
     end
 
-    subgraph Beacon_Services["BTC1 Beacon Services in DID Document (service.type=BTC1Beacon)"]
-      SB["SingletonBeacon<br>serviceEndpoint: p2pkh"]
-      MB["MapBeacon<br>serviceEndpoint: p2wpkh"]
-      SMT["SMTBeacon<br>serviceEndpoint: p2tr"]
-    end
 
     subgraph Aggregation
       BA[Beacon Aggregator]
-      Cohort[n-of-n MuSig2 Beacon Cohort<br> Beacon Participants]
+      Cohort[Beacon Cohort]
     end
 
     subgraph Networks
-      BTC[Bitcoin Network]
+      BTCRead[Read Bitcoin Network]
+      BTCWrite[Write Bitcoin Network]
       CAS[CAS IPFS 📦]
-      Sidecar[Sidecar Documents 🧳]
     end
 
     subgraph Verification
       Satoshi["Satoshi (Verifier)"]
-      Resolver[did:btc1 Resolver]
+      Resolver[Resolver]
     end
 
     %% Control/Enrollment
-    Stuart --> SB
+    Stuart --> Beacon_Services
     Stuart --> BA
     Others --> BA
-    BA --- Cohort
 
     %% Signal creation/broadcast
-    SB -- OP_RETURN tx with 32 bytes --> BTC
-    BA -- builds & signs Map/SMT signals --> Cohort
-    Cohort -- PSBTs → aggregate → OP_RETURN --> BTC
+    Beacon_Services -- OP_RETURN --> BTCWrite
+    BA -- Builds & sign Beacon Signals --> Cohort
+    Cohort -- PSBTs → aggregate → OP_RETURN --> BTCWrite
 
     %% Side-channel data publication
-    SB -. optional publish btc1Update .-> CAS
+    Stuart -. optional publish .-> CAS
     BA -. publish map & updates .-> CAS
-    Stuart -. share updates/proofs .-> Sidecar
+    Stuart -. share updates/proofs .-> Resolver
 
     %% Resolution & verification
-    Satoshi --> Resolver
-    Resolver --> BTC
+    Resolver -- get beacon signals --> BTCRead
     Resolver -. get docs by hash .-> CAS
-    Resolver -. load provided docs .-> Sidecar
 
     %% Document reconstruction checks
-    Resolver -->|Process Signals per beaconType<br>& apply btc1Updates in order| Satoshi
+    Resolver -->|Process Signals| Satoshi
