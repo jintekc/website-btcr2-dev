@@ -27,6 +27,18 @@ export default withMermaid(
       },
       sidebar: [
         {
+          text: 'Specification',
+          link: '/spec'
+        },
+        {
+          text: 'Diagrams',
+          link: '/diagrams'
+        },
+        {
+          text: 'Demo',
+          link: '/demo'
+        },
+        {
           text: 'Implementations',
           link: '/impls',
           items: [
