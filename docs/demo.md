@@ -15,11 +15,13 @@ The below sections demo how to use each feature of DID Method BTCR2.
 
 ## Create
 
-TODO
+<ClientOnly>
+  <DidBtcr2DemoCreate />
+  <DidBtcr2DemoResolve />
+</ClientOnly>
 
 ## Resolve
 
-TODO
 
 ## Update
 

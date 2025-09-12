@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default withMermaid(
   defineConfig({
@@ -12,6 +14,48 @@ export default withMermaid(
     },
     mermaidPlugin: {
       class: 'mermaid'
+    },
+    vite: {
+      plugins: [
+       {
+          name: 'virtual-empty',
+          resolveId(id) { return id === '/@empty' ? id : null },
+          load(id) { return id === '/@empty' ? 'export default {}' : null },
+        },
+        wasm(),
+        topLevelAwait(),
+      ],
+       resolve: {
+        conditions: ['browser'],
+        alias: {
+          'bitcoin-core': '/@empty',
+          'tiny-secp256k1': '/@empty',
+          'dtrace-provider': '/@empty',
+          'bunyan': '/@empty',
+          '@uphold/request-logger': '/@empty',
+          'request': '/@empty',
+          'http': '/@empty',
+          'https': '/@empty',
+          'fs': '/@empty',
+          'net': '/@empty',
+          'tls': '/@empty',
+          'zlib': '/@empty',
+          'vm': '/@empty',
+          'os': '/@empty',
+          'path': '/@empty',
+        },
+        dedupe: ['vue'], 
+      },
+      ssr: { noExternal: ['@did-btcr2/method','@did-btcr2/keypair','@did-btcr2/cryptosuite'] },
+      optimizeDeps: {
+        exclude: [
+          '@did-btcr2/method',
+          '@did-btcr2/keypair',
+          '@did-btcr2/cryptosuite',
+          'tiny-secp256k1',
+          'bitcoin-core',
+        ],
+      },
     },
     themeConfig: {
       outline: { level: 'deep' },

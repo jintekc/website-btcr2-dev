@@ -1,5 +1,6 @@
 onlyBuiltDependencies:
   - '@ipshipyard/node-datachannel'
+  - '@swc/core'
   - classic-level
   - dtrace-provider
   - esbuild
