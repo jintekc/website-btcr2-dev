@@ -13,7 +13,7 @@ sequenceDiagram
     participant CAS as CAS/IPFS 📦 (optional)
     participant Side as Sidecar 🧳
 
-    Note over Stu: Compute index = H(did)<br/>Pick/advance nonce<br/>Optionally compute updateId = SHA256(JCS(btc1Update))
+    Note over Stu: Compute index = H(did)<br/>Pick/advance nonce<br/>Optionally compute updateId = SHA256(JCS(btcr2Update))
 
     par Submit (privacy)
       Stu-->>Agg: { index, (optional) updateId? }<br/>(no DID or raw update)
@@ -26,16 +26,16 @@ sequenceDiagram
     Coh->>BTC: Aggregate PSBTs → final tx broadcast
 
     opt If update provided via CAS
-      Stu->>CAS: Publish btc1Update by updateId
+      Stu->>CAS: Publish btcr2Update by updateId
     end
     Stu->>Sat: Deliver smtProof {id=rootHash, nonce, (updateId?), path[]} via Sidecar
-    Sat->>Res: Resolve did:btc1:...
+    Sat->>Res: Resolve did:btcr2:...
     Res->>BTC: Read OP_RETURN rootHash from SMT Beacon address
     Sat->>Res: Provide smtProof via sidecar
     alt If updateId present
-      Res->>CAS: Fetch btc1Update by updateId (or Sidecar)
+      Res->>CAS: Fetch btcr2Update by updateId (or Sidecar)
     end
 
     Res->>Res: Verify path from index using nonce and (updateId?) → rootHash (per §6.6.2.3)
-    Res->>Res: If updateId present, apply btc1Update, else non-inclusion → no update
+    Res->>Res: If updateId present, apply btcr2Update, else non-inclusion → no update
     Res-->>Sat: Resolved DID (validated via SMT proof)

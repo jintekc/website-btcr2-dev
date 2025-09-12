@@ -1,9 +1,9 @@
 ---
-title: 7.3.3 Announce BTC1 Update
+title: 7.3.3 Announce BTCR2 Update
 ---
 
 flowchart TD
-    Start@{shape: circle, label: Announce<br>BTC1 Update} --> FindBeacons{Find<br>beaconServices}
+    Start@{shape: circle, label: Announce<br>BTCR2 Update} --> FindBeacons{Find<br>beaconServices}
     FindBeacons -->|NOT FOUND| BeaconNotFound@{shape: stadium, label: BeaconNotFoundError}
     FindBeacons -->|FOUND| ForEach[For each<br>beaconService]
     ForEach -->AddMoreBeacons{beaconService<br>.type}

@@ -3,7 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default withMermaid(
   defineConfig({
-    title: 'did:btc1',
+    title: 'did:btcr2',
     description: 'A censorship-resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document.',
     cleanUrls: true,
     mermaid: {
@@ -37,7 +37,7 @@ export default withMermaid(
           ]
         }
       ],
-      socialLinks: [{ icon: 'github', link: 'https://github.com/dcdpr/did-btc1' }]
+      socialLinks: [{ icon: 'github', link: 'https://github.com/dcdpr/did-btcr2' }]
     },
   })
 )
