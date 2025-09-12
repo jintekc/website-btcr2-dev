@@ -4,8 +4,8 @@ The Java implementation ...
 
 ## GitHub Repos
 
-* [Universal Resolver Driver DID BTC1](https://github.com/danubetech/uni-resolver-driver-did-btc1/tree/main)
-* [Universal Registrar Driver DID BTC1](https://github.com/danubetech/uni-registrar-driver-did-btc1)
+* [Universal Resolver Driver DID BTCR2](https://github.com/danubetech/uni-resolver-driver-did-btr2/tree/main)
+* [Universal Registrar Driver DID BTCR2](https://github.com/danubetech/uni-registrar-driver-did-btr2)
 
 ## Install & Config
 

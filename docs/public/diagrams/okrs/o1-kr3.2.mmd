@@ -9,12 +9,12 @@ flowchart TB
 
     subgraph Off_Chain_Public["CAS / IPFS 📦"]
       MAP["🗺 Beacon Announcement Map (JSON)"]
-      UPD["🧾 btc1Update (JSON)"]
+      UPD["🧾 btcr2Update (JSON)"]
     end
 
     subgraph Off_Chain_Private[Sidecar Data 🧳]
       PROOF["🌲 smtProof {id, nonce, (updateId), path}"]
-      DOCS["🧾 btc1Update (if not on CAS)"]
+      DOCS["🧾 btcr2Update (if not on CAS)"]
     end
 
     OP32 -. used by resolver to look up/verify .- MAP
