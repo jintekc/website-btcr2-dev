@@ -1,8 +1,7 @@
-import './custom.css'
 import DefaultTheme from 'vitepress/theme';
 import DidBtcr2DemoCreate from './components/DidBtcr2DemoCreate.vue';
 import DidBtcr2DemoResolve from './components/DidBtcr2DemoResolve.vue';
-
+import './custom.css';
 export default {
   ...DefaultTheme,
   enhanceApp({ app }) {
