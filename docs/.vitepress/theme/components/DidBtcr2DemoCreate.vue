@@ -10,7 +10,7 @@ hljs.registerLanguage("typescript", typescript);
 // --- secp256k1 (for random key gen) ---
 import * as secp from "@noble/secp256k1";
 
-type DidBtcr2NS = {
+type DemoNamespace = {
   DidBtcr2: {
     create: (args: any) => Promise<any>;
   };
@@ -18,8 +18,8 @@ type DidBtcr2NS = {
     fromPublicKey: (args: any) => any;
   };
 };
-let DidBtcr2: DidBtcr2NS["DidBtcr2"] | null = null;
-let IntermediateDidDocument: DidBtcr2NS["IntermediateDidDocument"] | null =
+let DidBtcr2: DemoNamespace["DidBtcr2"] | null = null;
+let IntermediateDidDocument: DemoNamespace["IntermediateDidDocument"] | null =
   null;
 
 const ready = ref(false);
@@ -107,11 +107,16 @@ const snippet = computed(() => {
   const net = selectedNetwork.value || "<choose network>";
   if (idType.value === "KEY") {
     const hex = pubKeyHex.value || "<paste compressed pubkey hex>";
+    const bytes = isKeyValid.value
+      ? `new Uint8Array([${Array.from(hexToBytes(hex))
+          .map((b) => b.toString())
+          .join(", ")}])`
+      : "<Uint8Array of pubkey bytes>";
     return `import { DidBtcr2 } from "@did-btcr2/method";
 
 const options = { version: 1, network: "${net}" as const };
 const pubKeyHex = "${hex}";
-const pubKeyBytes = Uint8Array.from(pubKeyHex.match(/.{1,2}/g)!.map(b => parseInt(b, 16)));
+const pubKeyBytes = ${bytes};
 
 const res = await DidBtcr2.create({
   idType: "KEY",
@@ -130,7 +135,8 @@ const intermediateDidDocument = ${doc};
 const res = await DidBtcr2.create({ idType: "EXTERNAL", intermediateDidDocument, options });
 console.log(res);`;
   }
-  return `// Choose network & idType, then fill the fields to see the call`;
+  return `// Choose network & idType, then fill
+// the fields to see the call`;
 });
 const highlightedSnippet = computed(
   () => hljs.highlight(snippet.value, { language: "typescript" }).value
@@ -226,8 +232,6 @@ async function copySnippet() {
 <template>
   <ClientOnly>
     <div class="demo-card">
-      <h3 class="title">Create DID (Browser)</h3>
-
       <div class="row">
         <label class="field">
           <span class="label">Bitcoin Network</span>
@@ -295,12 +299,41 @@ async function copySnippet() {
         <summary>Live args preview</summary>
 
         <button
-          class="btn copy"
+          class="copy-control"
           type="button"
           @click="copySnippet"
-          :aria-label="copied ? 'Copied' : 'Copy code'"
+          :aria-label="copied ? 'Copied' : 'Copy'"
         >
-          {{ copied ? "Copied!" : "Copy" }}
+          <!-- Clipboard / Check icon -->
+          <svg
+            v-if="!copied"
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path
+              d="M20 6L9 17l-5-5"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+
         </button>
 
         <pre class="hljs"><code v-html="highlightedSnippet"></code></pre>
@@ -410,19 +443,13 @@ async function copySnippet() {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.btn .copy {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--vp-c-divider);
-  background: color-mix(in oklab, var(--vp-c-bg) 85%, var(--vp-c-brand) 15%);
-  color: var(--vp-c-text-1);
-  font-size: 12px;
-  line-height: 1;
+.copy-control {
+  position: relative;
+  padding: 0.25em;
+  right: 2em;
+  float: right;
 }
-.btn .copy:hover {
+.copy-control:hover {
   border-color: var(--vp-c-brand);
 }
 .sep {
