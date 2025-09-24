@@ -1,3 +1,31 @@
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+select,
+input,
+textarea,
+button {
+  color-scheme: inherit;
+}
+
+select {
+  background-color: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+option {
+  background-color: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+}
+
 :root {
   --vp-c-brand-1: #38cee0;
   --vp-c-brand-2: #123456;
@@ -46,21 +74,6 @@
 .mermaid text {
   fill: var(--vp-c-brand-2) !important;
 }
-
-/* :root[data-theme='light'] {
-  --mermaid-bg: var(--vp-c-brand-1);
-  --mermaid-stroke: var(--vp-c-brand-2);
-}
-
-:root[data-theme='dark'] {
-  --mermaid-bg: #1a1a1a;
-  --mermaid-stroke: var(--vp-c-brand-1);
-} */
-
-/* .mermaid .cluster rect {
-  fill: var(--mermaid-bg) !important;
-  stroke: var(--mermaid-stroke) !important;
-} */
 
 .vp-doc p {
   line-height: 25px;

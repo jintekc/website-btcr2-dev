@@ -15,7 +15,7 @@ type DemoNamespace = {
     create: (args: any) => Promise<any>;
   };
   IntermediateDidDocument: {
-    fromPublicKey: (args: any) => any;
+    fromPublicKey: (publicKey: any, network: string) => any;
     fromJSON: (args: any) => any;
   };
 };
@@ -26,14 +26,13 @@ let IntermediateDidDocument: DemoNamespace["IntermediateDidDocument"] | null =
 const ready = ref<boolean>(false);
 const isLoading = ref<boolean>(false);
 const output = ref<string | null>(null);
-
+const ID_PLACEHOLDER_VALUE = 'did:btcr2:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 const networks = [
   "bitcoin",
   "testnet3",
   "testnet4",
   "signet",
   "mutinynet",
-  "regtest",
 ] as const;
 
 type Network = (typeof networks)[number];
@@ -41,8 +40,9 @@ type Network = (typeof networks)[number];
 const selectedNetwork = ref<Network | "">("");
 const idType = ref<"KEY" | "EXTERNAL" | "">("");
 
-const pubKeyHex = ref(""); // shown only when KEY
-const intermediateDocText = ref(""); // shown only when EXTERNAL
+const pubKeyHex = ref("");
+const intermediateDocText = ref("");
+const initialDocument = ref("");
 const intermediateDocError = ref<string | null>(null);
 
 // small helpers
@@ -64,9 +64,9 @@ function bytesToHex(bytes: Uint8Array) {
 
 onMounted(async () => {
   try {
-    const mod = await import("@did-btcr2/method");
-    DidBtcr2 = (mod as any).DidBtcr2;
-    IntermediateDidDocument = (mod as any).IntermediateDidDocument;
+    const btcr2 = await import("@did-btcr2/method");
+    DidBtcr2 = (btcr2 as any).DidBtcr2;
+    IntermediateDidDocument = (btcr2 as any).IntermediateDidDocument;
     ready.value = !!DidBtcr2 && !!IntermediateDidDocument;
   } catch (error: any) {
     console.error("Failed to load DidBtcr2 module for Create:", error);
@@ -92,12 +92,14 @@ const isKeyValid = computed(() => {
   const prefix = h.slice(0, 2);
   return prefix === "02" || prefix === "03";
 });
+
 const isExternalValid = computed(() => {
   if (idType.value !== "EXTERNAL") return false;
   const raw = intermediateDocText.value.trim();
   if (!raw || intermediateDocError.value) return false;
   return true;
 });
+
 const isFormValid = computed(
   () =>
     !!selectedNetwork.value &&
@@ -118,9 +120,9 @@ const snippet = computed(() => {
 
 const options = { version: 1, network: "${net}" };
 const pubKeyHex = "${hex}";
-const pubKeyBytes = ${bytes};
+const genesisBytes = ${bytes};
 
-const res = await DidBtcr2.create({ idType: "KEY", pubKeyBytes, options });
+const res = await DidBtcr2.create({ idType: "KEY", genesisBytes, options });
 console.log(res);`;
   } else if (idType.value === "EXTERNAL") {
     const doc =
@@ -149,7 +151,7 @@ async function randomize() {
       networks[Math.floor(Math.random() * networks.length)];
     // random id type
     idType.value = Math.random() < 0.5 ? "KEY" : "EXTERNAL";
-
+    // random key & intermediate doc
     const sec = secp.utils.randomSecretKey();
     const pub = secp.getPublicKey(sec, true);
     if (idType.value === "KEY") {
@@ -158,7 +160,7 @@ async function randomize() {
     } else {
       pubKeyHex.value = "";
       intermediateDocText.value = JSON.stringify(
-        IntermediateDidDocument.fromPublicKey(pub),
+        IntermediateDidDocument.fromPublicKey(pub, selectedNetwork.value),
         undefined,
         4
       );
@@ -175,27 +177,18 @@ async function handleCreate() {
   output.value = "";
   try {
     const options = { version: 1, network: selectedNetwork.value };
-    let res: any;
-
-    if (idType.value === "KEY") {
-      const bytes = hexToBytes(pubKeyHex.value);
-      res = await DidBtcr2!.create({
-        idType: "KEY",
-        genesisBytes: bytes,
-        options,
-      });
+    const genesisBytes = idType.value === "KEY"
+      ? hexToBytes(pubKeyHex.value)
+      : await JSON.canonicalization.canonicalhash(IntermediateDidDocument.fromJSON(JSON.parse(intermediateDocText.value)));
+    output.value = await DidBtcr2.create({ idType: idType.value, genesisBytes, options, });
+    if (idType.value === "EXTERNAL") {
+      initialDocument.value = JSON.parse(
+        JSON.stringify(intermediateDocText.value)
+          .replaceAll(ID_PLACEHOLDER_VALUE, output.value)
+      )
     } else {
-      const doc = IntermediateDidDocument.fromJSON(
-        JSON.parse(intermediateDocText.value)
-      );
-      console.log("Parsed intermediate DID doc:", doc);
-      res = await DidBtcr2.create({
-        idType: "EXTERNAL",
-        genesisBytes: doc,
-        options,
-      });
+      initialDocument.value = "";
     }
-    output.value = res;
   } catch (error: any) {
     console.error("Failed to handleCreate:", error);
     output.value = error?.stack || String(error);
@@ -254,6 +247,32 @@ async function copyResponse() {
     console.error("Copy failed:", err);
   }
 }
+
+const copiedInitialDocument = ref(false);
+async function copyInitialDocument() {
+  try {
+    const text = initialDocument.value;
+    if (!text) return;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    copiedInitialDocument.value = true;
+    setTimeout(() => (copiedInitialDocument.value = false), 1500);
+  } catch (err) {
+    console.error("Copy failed:", err);
+  }
+}
 </script>
 
 <template>
@@ -262,7 +281,7 @@ async function copyResponse() {
       <div class="row">
         <label class="field">
           <span class="label">Bitcoin Network</span>
-          <select class="select" v-model="selectedNetwork">
+          <select id="bitcoin-network" class="select" v-model="selectedNetwork">
             <option value="" disabled>Select a network…</option>
             <option v-for="n in networks" :key="n" :value="n">{{ n }}</option>
           </select>
@@ -270,16 +289,12 @@ async function copyResponse() {
 
         <label class="field">
           <span class="label">ID Type</span>
-          <select class="select" v-model="idType">
+          <select id="id-type" class="select" v-model="idType">
             <option value="" disabled>Select id type…</option>
             <option value="KEY">key</option>
             <option value="EXTERNAL">external</option>
           </select>
         </label>
-
-        <button class="btn primary" :disabled="!ready" @click="randomize">
-          Random Inputs
-        </button>
       </div>
 
       <div v-if="idType === 'KEY'" class="field">
@@ -304,10 +319,47 @@ async function copyResponse() {
           <span v-if="isLoading" class="spinner" aria-hidden="true" />
           {{ isLoading ? "Creating…" : "Create" }}
         </button>
+        <button class="btn primary" :disabled="!ready" @click="randomize">
+          Random Inputs
+        </button>
+      </div>
+
+      <div class="response-wrap">
+        <h4 class="sep">Response</h4>
+        <button class="copy-control" type="button" @click="copyResponse"
+          :aria-label="copiedResponse ? 'Copied' : 'Copy'">
+          <svg v-if="!copiedResponse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+        <pre class="out hljs">{{ output || (isLoading ? "" : "—") }}</pre>
+      </div>
+
+      <div v-if="idType === 'EXTERNAL' && !!output" class="external-wrap">
+        <h4 class="sep">Initial Document</h4>
+        <button class="copy-control" type="button" @click="copyInitialDocument"
+          :aria-label="copiedInitialDocument ? 'Copied' : 'Copy'">
+          <svg v-if="!copiedInitialDocument" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+        <pre class="out hljs">{{ initialDocument || (isLoading ? "" : "—") }}</pre>
       </div>
 
       <details class="snippet" open>
-        <summary>Live Preview</summary>
+        <summary class="summary">Code Preview</summary>
 
         <button class="copy-control" type="button" @click="copySnippet" :aria-label="copiedSnippet ? 'Copied' : 'Copy'">
           <svg v-if="!copiedSnippet" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -323,20 +375,6 @@ async function copyResponse() {
 
         <pre class="hljs"><code v-html="highlightedSnippet"></code></pre>
       </details>
-
-      <h4 class="sep">Response</h4>
-      <button class="copy-control" type="button" @click="copyResponse" :aria-label="copiedResponse ? 'Copied' : 'Copy'">
-        <svg v-if="!copiedResponse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
-        </svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor">
-          <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-        </svg>
-      </button>
-      <pre class="out hljs">{{ output || (isLoading ? "" : "—") }}</pre>
     </div>
   </ClientOnly>
 </template>
@@ -348,14 +386,14 @@ async function copyResponse() {
   border-radius: 8px;
 }
 
-.title {
-  margin: 0 0 8px 0;
-  font-weight: 600;
+.summary {
+  letter-spacing: -0.01em;
+  line-height: 24px;
+  font-size: 18px;
 }
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
   gap: 10px;
   align-items: end;
 }
@@ -393,6 +431,10 @@ async function copyResponse() {
 
 .actions {
   margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 20px;
+  align-items: center;
 }
 
 .btn {
@@ -462,12 +504,15 @@ async function copyResponse() {
 .copy-control {
   position: relative;
   padding: 0.25em;
-  right: 2em;
   float: right;
 }
 
 .copy-control:hover {
   border-color: var(--vp-c-brand);
+}
+
+.response-wrap {
+  position: relative;
 }
 
 .sep {
@@ -485,6 +530,5 @@ async function copyResponse() {
 .hljs {
   border-radius: 8px;
   padding: 12px;
-  overflow: auto;
 }
 </style>
