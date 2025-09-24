@@ -1,6 +1,37 @@
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+select,
+input,
+textarea,
+button {
+  color-scheme: inherit;
+}
+
+select {
+  background-color: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+option {
+  background-color: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+}
+
 :root {
-  --vp-c-brand-1: #646cff;
-  --vp-c-brand-2: #747bff;
+  --vp-c-brand-1: #38cee0;
+  --vp-c-brand-2: #123456;
+  --vp-c-alt: #32363f;
+  --vp-button-brand-bg: #123456;
+  --vp-button-alt-bg: #0d688a;
 }
 
 .heading .text {
@@ -11,6 +42,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.mermaid p {
+  color: white;
+}
+
+.edgeLabel p {
+  background-color: var(--vp-c-brand-1) !important;
+}
+
+.mermaid .cluster rect {
+  fill: var(--vp-c-brand-2) !important;
+  stroke: var(--vp-c-brand-1) !important;
+  stroke-width: 1px !important;
+}
+
+.mermaid .node rect,
+.mermaid .node path,
+.mermaid .node polygon,
+.mermaid .node circle {
+  fill: var(--vp-c-brand-2) !important;
+  stroke: var(--vp-c-brand-1) !important;
+
+}
+
+.mermaid .edgePath path {
+  stroke: var(--vp-c-brand-2) !important;
+}
+
+.mermaid text {
+  fill: var(--vp-c-brand-2) !important;
 }
 
 .vp-doc p {

@@ -2,7 +2,7 @@
 layout: home
 hero:
   name: did:btcr2
-  text: Bitcoin Reference 2.0 DID Method 
+  text: Bitcoin Reference 2.0 
   tagline: >
     A censorship-resistant DID Method using the Bitcoin blockchain as a Verifiable Data Registry to announce changes to the DID document.
 
@@ -10,6 +10,9 @@ hero:
     - theme: brand
       text: Getting Started
       link: /impls
+    - theme: alt
+      text: Demo
+      link: /demo
 features:
   - icon: 🛡️
     title: Censorship Resistant

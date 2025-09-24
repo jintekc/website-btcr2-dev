@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default withMermaid(
   defineConfig({
@@ -12,6 +14,25 @@ export default withMermaid(
     },
     mermaidPlugin: {
       class: 'mermaid'
+    },
+    vite: {
+      server: {
+        proxy: {
+          '/mempool': {
+            target: 'https://mempool.space',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/mempool/, ''),
+          }
+        }
+      },
+      plugins: [
+        wasm(),
+        topLevelAwait(),
+      ],
+       resolve: {
+        conditions: ['browser'],
+        dedupe: ['vue'], 
+      },
     },
     themeConfig: {
       outline: { level: 'deep' },
@@ -26,6 +47,18 @@ export default withMermaid(
         copyright: 'Copyright © 2025 Digital Contract Design'
       },
       sidebar: [
+        {
+          text: 'Specification',
+          link: '/spec'
+        },
+        {
+          text: 'Diagrams',
+          link: '/diagrams'
+        },
+        {
+          text: 'Demo',
+          link: '/demo'
+        },
         {
           text: 'Implementations',
           link: '/impls',
