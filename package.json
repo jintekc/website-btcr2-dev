@@ -28,7 +28,7 @@
     "vue": "^3.5.21"
   },
   "dependencies": {
-    "@did-btcr2/method": "file:/home/jintek/projects/github/@dcdpr/did-btcr2-js/packages/method/release/did-btcr2-method-0.16.0.tgz",
+    "@did-btcr2/method": "file:/home/jintek/projects/github/@dcdpr/did-btcr2-js/packages/method/release/did-btcr2-method-0.17.0.tgz",
     "@noble/secp256k1": "^3.0.0",
     "highlight.js": "^11.11.1"
   }

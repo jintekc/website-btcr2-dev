@@ -16,12 +16,16 @@ export default withMermaid(
       class: 'mermaid'
     },
     vite: {
+      server: {
+        proxy: {
+          '/mempool': {
+            target: 'https://mempool.space',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/mempool/, ''),
+          }
+        }
+      },
       plugins: [
-       {
-          name: 'virtual-empty',
-          resolveId(id) { return id === '/@empty' ? id : null },
-          load(id) { return id === '/@empty' ? 'export default {}' : null },
-        },
         wasm(),
         topLevelAwait(),
       ],
@@ -29,7 +33,6 @@ export default withMermaid(
         conditions: ['browser'],
         dedupe: ['vue'], 
       },
-      ssr: { noExternal: ['@did-btcr2/method'] },
     },
     themeConfig: {
       outline: { level: 'deep' },

@@ -1,6 +1,9 @@
 :root {
-  --vp-c-brand-1: #646cff;
-  --vp-c-brand-2: #747bff;
+  --vp-c-brand-1: #38cee0;
+  --vp-c-brand-2: #123456;
+  --vp-c-alt: #32363f;
+  --vp-button-brand-bg: #123456;
+  --vp-button-alt-bg: #0d688a;
 }
 
 .heading .text {
@@ -12,6 +15,52 @@
   align-items: center;
   justify-content: center;
 }
+
+.mermaid p {
+  color: white;
+}
+
+.edgeLabel p {
+  background-color: var(--vp-c-brand-1) !important;
+}
+
+.mermaid .cluster rect {
+  fill: var(--vp-c-brand-2) !important;
+  stroke: var(--vp-c-brand-1) !important;
+  stroke-width: 1px !important;
+}
+
+.mermaid .node rect,
+.mermaid .node path,
+.mermaid .node polygon,
+.mermaid .node circle {
+  fill: var(--vp-c-brand-2) !important;
+  stroke: var(--vp-c-brand-1) !important;
+
+}
+
+.mermaid .edgePath path {
+  stroke: var(--vp-c-brand-2) !important;
+}
+
+.mermaid text {
+  fill: var(--vp-c-brand-2) !important;
+}
+
+/* :root[data-theme='light'] {
+  --mermaid-bg: var(--vp-c-brand-1);
+  --mermaid-stroke: var(--vp-c-brand-2);
+}
+
+:root[data-theme='dark'] {
+  --mermaid-bg: #1a1a1a;
+  --mermaid-stroke: var(--vp-c-brand-1);
+} */
+
+/* .mermaid .cluster rect {
+  fill: var(--mermaid-bg) !important;
+  stroke: var(--mermaid-stroke) !important;
+} */
 
 .vp-doc p {
   line-height: 25px;

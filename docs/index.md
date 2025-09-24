@@ -10,6 +10,9 @@ hero:
     - theme: brand
       text: Getting Started
       link: /impls
+    - theme: alt
+      text: Demo
+      link: /demo
 features:
   - icon: 🛡️
     title: Censorship Resistant

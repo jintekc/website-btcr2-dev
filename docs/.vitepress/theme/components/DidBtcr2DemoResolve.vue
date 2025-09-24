@@ -36,11 +36,9 @@ onMounted(async () => {
   }
 });
 
-function parseOptions():
-  | { ok: true; value: any }
-  | { ok: false; error: string } {
+function parseOptions(): { ok: boolean; value?: any, error?: string } {
   const raw = optionsText.value.trim();
-  if (!raw || raw === "{}") return { ok: true, value: undefined }; // treat as absent
+  if (!raw || raw === "{}") return { ok: true, value: undefined };
   try {
     const value = JSON.parse(raw);
     return { ok: true, value };
@@ -104,6 +102,58 @@ async function handleResolve() {
     isLoading.value = false;
   }
 }
+
+
+const copiedSnippet = ref(false);
+async function copySnippet() {
+  try {
+    const text = snippet.value; // raw code, not the highlighted HTML
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    copiedSnippet.value = true;
+    setTimeout(() => (copiedSnippet.value = false), 1500);
+  } catch (err) {
+    console.error("Copy failed:", err);
+  }
+}
+
+const copiedResponse = ref(false);
+async function copyResponse() {
+  try {
+    const text = output.value;
+    if (!text) return;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    copiedResponse.value = true;
+    setTimeout(() => (copiedResponse.value = false), 1500);
+  } catch (err) {
+    console.error("Copy failed:", err);
+  }
+}
 </script>
 
 <template>
@@ -111,43 +161,53 @@ async function handleResolve() {
     <div class="demo-card">
       <div class="row">
         <label>Identifier (DID)</label>
-        <input
-          class="input"
-          v-model.trim="did"
-          placeholder="did:btcr2:..."
-          spellcheck="false"
-        />
+        <input class="input" v-model.trim="did" placeholder="did:btcr2:..." spellcheck="false" />
       </div>
 
       <div class="row">
         <label class="field">Resolution Options (optional JSON)</label>
-        <textarea
-          class="textarea"
-          v-model="optionsText"
-          rows="1"
-          spellcheck="false"
-        />
+        <textarea class="textarea" v-model="optionsText" rows="1" spellcheck="false" />
         <p v-if="optionsError" class="error">JSON error: {{ optionsError }}</p>
       </div>
 
       <div class="actions">
-      <button
-        class="btn"
-        :disabled="!ready || isLoading"
-        @click="handleResolve"
-      >
-        <span v-if="isLoading" class="spinner" aria-hidden="true" />
-        {{ isLoading ? "Resolving…" : "Resolve" }}
-      </button>
+        <button class="btn" :disabled="!ready || isLoading" @click="handleResolve">
+          <span v-if="isLoading" class="spinner" aria-hidden="true" />
+          {{ isLoading ? "Resolving…" : "Resolve" }}
+        </button>
       </div>
 
       <details class="snippet" open>
         <summary>Live Preview</summary>
+
+        <button class="copy-control" type="button" @click="copySnippet" :aria-label="copiedSnippet ? 'Copied' : 'Copy'">
+          <svg v-if="!copiedSnippet" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+
         <pre class="hljs"><code v-html="highlightedSnippet"></code></pre>
       </details>
 
       <h4 class="sep">Response</h4>
-      <pre class="out">{{ output || (isLoading ? "" : "—") }}</pre>
+      <button class="copy-control" type="button" @click="copyResponse" :aria-label="copiedResponse ? 'Copied' : 'Copy'">
+        <svg v-if="!copiedResponse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor">
+          <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+      <pre class="out hljs">{{ output || (isLoading ? "" : "—") }}</pre>
     </div>
   </ClientOnly>
 </template>
@@ -160,13 +220,16 @@ async function handleResolve() {
   display: grid;
   gap: 12px;
 }
+
 .row {
   display: grid;
   gap: 6px;
 }
+
 label {
   font-weight: 600;
 }
+
 select,
 input,
 textarea {
@@ -177,14 +240,17 @@ textarea {
   border-radius: 8px;
   font-family: inherit;
 }
+
 textarea {
   resize: vertical;
 }
+
 .actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .btn {
   padding: 8px 14px;
   border-radius: 8px;
@@ -193,10 +259,12 @@ textarea {
   color: white;
   cursor: pointer;
 }
+
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .spinner {
   display: inline-block;
   width: 14px;
@@ -207,29 +275,36 @@ textarea {
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
+
 .hint {
   font-size: 12px;
   color: var(--vp-c-text-2);
 }
+
 .error {
   color: var(--vp-c-danger-1);
 }
+
 .snippet summary {
   cursor: pointer;
   font-weight: 600;
 }
+
 .snippet pre {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
 .sep {
   margin: 4px 0 0;
 }
+
 .out {
   white-space: pre-wrap;
   word-break: break-word;
@@ -237,6 +312,7 @@ textarea {
   padding: 10px;
   border-radius: 8px;
 }
+
 .hljs {
   border-radius: 8px;
   padding: 12px;

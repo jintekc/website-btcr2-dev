@@ -16,15 +16,16 @@ type DemoNamespace = {
   };
   IntermediateDidDocument: {
     fromPublicKey: (args: any) => any;
+    fromJSON: (args: any) => any;
   };
 };
 let DidBtcr2: DemoNamespace["DidBtcr2"] | null = null;
 let IntermediateDidDocument: DemoNamespace["IntermediateDidDocument"] | null =
   null;
 
-const ready = ref(false);
-const isLoading = ref(false);
-const output = ref("");
+const ready = ref<boolean>(false);
+const isLoading = ref<boolean>(false);
+const output = ref<string | null>(null);
 
 const networks = [
   "bitcoin",
@@ -34,6 +35,7 @@ const networks = [
   "mutinynet",
   "regtest",
 ] as const;
+
 type Network = (typeof networks)[number];
 
 const selectedNetwork = ref<Network | "">("");
@@ -65,7 +67,7 @@ onMounted(async () => {
     const mod = await import("@did-btcr2/method");
     DidBtcr2 = (mod as any).DidBtcr2;
     IntermediateDidDocument = (mod as any).IntermediateDidDocument;
-    ready.value = !!DidBtcr2;
+    ready.value = !!DidBtcr2 && !!IntermediateDidDocument;
   } catch (error: any) {
     console.error("Failed to load DidBtcr2 module for Create:", error);
     output.value = error?.stack || String(error);
@@ -109,20 +111,16 @@ const snippet = computed(() => {
     const hex = pubKeyHex.value || "<paste compressed pubkey hex>";
     const bytes = isKeyValid.value
       ? `new Uint8Array([${Array.from(hexToBytes(hex))
-          .map((b) => b.toString())
-          .join(", ")}])`
+        .map((b) => b.toString())
+        .join(", ")}])`
       : "<Uint8Array of pubkey bytes>";
     return `import { DidBtcr2 } from "@did-btcr2/method";
 
-const options = { version: 1, network: "${net}" as const };
+const options = { version: 1, network: "${net}" };
 const pubKeyHex = "${hex}";
 const pubKeyBytes = ${bytes};
 
-const res = await DidBtcr2.create({
-  idType: "KEY",
-  pubKeyBytes,
-  options
-});
+const res = await DidBtcr2.create({ idType: "KEY", pubKeyBytes, options });
 console.log(res);`;
   } else if (idType.value === "EXTERNAL") {
     const doc =
@@ -138,6 +136,7 @@ console.log(res);`;
   return `// Choose network & idType, then fill
 // the fields to see the call`;
 });
+
 const highlightedSnippet = computed(
   () => hljs.highlight(snippet.value, { language: "typescript" }).value
 );
@@ -158,7 +157,6 @@ async function randomize() {
       intermediateDocText.value = "";
     } else {
       pubKeyHex.value = "";
-      const rnd = Math.random().toString(36).slice(2, 10);
       intermediateDocText.value = JSON.stringify(
         IntermediateDidDocument.fromPublicKey(pub),
         undefined,
@@ -183,18 +181,21 @@ async function handleCreate() {
       const bytes = hexToBytes(pubKeyHex.value);
       res = await DidBtcr2!.create({
         idType: "KEY",
-        pubKeyBytes: bytes,
+        genesisBytes: bytes,
         options,
       });
     } else {
-      const doc = JSON.parse(intermediateDocText.value);
-      res = await DidBtcr2!.create({
+      const doc = IntermediateDidDocument.fromJSON(
+        JSON.parse(intermediateDocText.value)
+      );
+      console.log("Parsed intermediate DID doc:", doc);
+      res = await DidBtcr2.create({
         idType: "EXTERNAL",
-        IntermediateDidDocument: doc,
+        genesisBytes: doc,
         options,
       });
     }
-    output.value = JSON.stringify(res, null, 2);
+    output.value = res;
   } catch (error: any) {
     console.error("Failed to handleCreate:", error);
     output.value = error?.stack || String(error);
@@ -203,7 +204,7 @@ async function handleCreate() {
   }
 }
 
-const copied = ref(false);
+const copiedSnippet = ref(false);
 async function copySnippet() {
   try {
     const text = snippet.value; // raw code, not the highlighted HTML
@@ -221,8 +222,34 @@ async function copySnippet() {
       document.execCommand("copy");
       document.body.removeChild(ta);
     }
-    copied.value = true;
-    setTimeout(() => (copied.value = false), 1500);
+    copiedSnippet.value = true;
+    setTimeout(() => (copiedSnippet.value = false), 1500);
+  } catch (err) {
+    console.error("Copy failed:", err);
+  }
+}
+
+const copiedResponse = ref(false);
+async function copyResponse() {
+  try {
+    const text = output.value;
+    if (!text) return;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    copiedResponse.value = true;
+    setTimeout(() => (copiedResponse.value = false), 1500);
   } catch (err) {
     console.error("Copy failed:", err);
   }
@@ -256,15 +283,8 @@ async function copySnippet() {
       </div>
 
       <div v-if="idType === 'KEY'" class="field">
-        <span class="label"
-          >Compressed secp256k1 Public Key (hex, 33 bytes)</span
-        >
-        <input
-          class="input"
-          v-model.trim="pubKeyHex"
-          placeholder="02… or 03… (66 hex chars)"
-          spellcheck="false"
-        />
+        <span class="label">Compressed secp256k1 Public Key (hex, 33 bytes)</span>
+        <input class="input" v-model.trim="pubKeyHex" placeholder="02… or 03… (66 hex chars)" spellcheck="false" />
         <p v-if="pubKeyHex && !isKeyValid" class="warn">
           Must be 66 hex chars, starting with 02 or 03.
         </p>
@@ -272,75 +292,51 @@ async function copySnippet() {
 
       <div v-else-if="idType === 'EXTERNAL'" class="field">
         <span class="label">Intermediate DID Document (JSON)</span>
-        <textarea
-          class="textarea"
-          v-model="intermediateDocText"
-          rows="8"
-          spellcheck="false"
-          placeholder='{\n  "@context": ["https://www.w3.org/ns/did/v1"],\n  "id": "did:example:..."\n}'
-        />
+        <textarea class="textarea" v-model="intermediateDocText" rows="8" spellcheck="false"
+          placeholder='{\n  "@context": ["https://www.w3.org/ns/did/v1"],\n  "id": "did:example:..."\n}' />
         <p v-if="intermediateDocText && intermediateDocError" class="error">
           JSON error: {{ intermediateDocError }}
         </p>
       </div>
 
       <div class="actions">
-        <button
-          class="btn primary"
-          :disabled="!ready || isLoading || !isFormValid"
-          @click="handleCreate"
-        >
+        <button class="btn primary" :disabled="!ready || isLoading || !isFormValid" @click="handleCreate">
           <span v-if="isLoading" class="spinner" aria-hidden="true" />
           {{ isLoading ? "Creating…" : "Create" }}
         </button>
       </div>
 
       <details class="snippet" open>
-        <summary>Live args preview</summary>
+        <summary>Live Preview</summary>
 
-        <button
-          class="copy-control"
-          type="button"
-          @click="copySnippet"
-          :aria-label="copied ? 'Copied' : 'Copy'"
-        >
-          <!-- Clipboard / Check icon -->
-          <svg
-            v-if="!copied"
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
+        <button class="copy-control" type="button" @click="copySnippet" :aria-label="copiedSnippet ? 'Copied' : 'Copy'">
+          <svg v-if="!copiedSnippet" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
           </svg>
-          <svg
-            v-else
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path
-              d="M20 6L9 17l-5-5"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></path>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
-
         </button>
 
         <pre class="hljs"><code v-html="highlightedSnippet"></code></pre>
       </details>
 
       <h4 class="sep">Response</h4>
-      <pre class="out">{{ output || (isLoading ? "" : "—") }}</pre>
+      <button class="copy-control" type="button" @click="copyResponse" :aria-label="copiedResponse ? 'Copied' : 'Copy'">
+        <svg v-if="!copiedResponse" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor">
+          <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+      <pre class="out hljs">{{ output || (isLoading ? "" : "—") }}</pre>
     </div>
   </ClientOnly>
 </template>
@@ -351,24 +347,29 @@ async function copySnippet() {
   padding: 12px;
   border-radius: 8px;
 }
+
 .title {
   margin: 0 0 8px 0;
   font-weight: 600;
 }
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 10px;
   align-items: end;
 }
+
 .field {
   display: grid;
   gap: 6px;
 }
+
 .label {
   font-size: 12px;
   color: var(--vp-c-text-2);
 }
+
 .select,
 .input,
 .textarea {
@@ -381,17 +382,19 @@ async function copySnippet() {
     "Liberation Mono", "Courier New", monospace;
   width: 100%;
 }
+
 .select:focus,
 .input:focus,
 .textarea:focus {
   outline: none;
   border-color: var(--vp-c-brand-1);
-  box-shadow: 0 0 0 2px
-    color-mix(in oklab, var(--vp-c-brand-1) 25%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--vp-c-brand-1) 25%, transparent);
 }
+
 .actions {
   margin: 10px 0 0;
 }
+
 .btn {
   padding: 8px 14px;
   border-radius: 6px;
@@ -400,26 +403,34 @@ async function copySnippet() {
   color: var(--vp-c-brand-1);
   cursor: pointer;
 }
+
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background: var(--vp-c-alt) !important;
+  border-color: var(--vp-c-alt) !important;
 }
+
 .btn.primary {
   background: var(--vp-c-brand-1);
   color: #000;
   border-color: var(--vp-c-brand-1);
 }
+
 .btn.ghost {
   border-style: dashed;
 }
+
 .warn {
   color: #ffb020;
   font-size: 12px;
 }
+
 .error {
   color: #ff6b6b;
   font-size: 12px;
 }
+
 .spinner {
   display: inline-block;
   width: 14px;
@@ -431,36 +442,46 @@ async function copySnippet() {
   animation: spin 0.75s linear infinite;
   vertical-align: -2px;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
+
 .snippet {
+  font-size: 13px;
   margin: 14px 0 0;
 }
+
 .snippet code {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
 .copy-control {
   position: relative;
   padding: 0.25em;
   right: 2em;
   float: right;
 }
+
 .copy-control:hover {
   border-color: var(--vp-c-brand);
 }
+
 .sep {
   margin: 16px 0 8px;
 }
+
 .out {
   margin-top: 6px;
   white-space: pre-wrap;
   word-break: break-word;
   min-height: 40px;
+  font-size: 13px;
 }
+
 .hljs {
   border-radius: 8px;
   padding: 12px;
