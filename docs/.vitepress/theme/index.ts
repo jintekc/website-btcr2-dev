@@ -2,17 +2,14 @@ import DefaultTheme from 'vitepress/theme';
 import DidBtcr2DemoCreate from './components/DidBtcr2DemoCreate.vue';
 import DidBtcr2DemoResolve from './components/DidBtcr2DemoResolve.vue';
 import './custom.css';
-// main client entry (e.g., .vitepress/theme/index.ts or a client plugin)
+
 const MEMPOOL_RX = /^https?:\/\/(mempool\.space|mempool\.holdings)\b/i;
 const originalFetch = globalThis.fetch.bind(globalThis);
 
 globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : (input as URL).toString();
   if (MEMPOOL_RX.test(url)) {
-    // DEV: point to Vite proxy (/mempool → https://mempool.space)
-    // PROD: point to your serverless proxy (/api/mempool → upstream)
-    const proxied = url
-      .replace(MEMPOOL_RX, '/mempool');
+    const proxied = url.replace(MEMPOOL_RX, '/mempool');
     return originalFetch(proxied, init);
   }
   return originalFetch(input as any, init);
